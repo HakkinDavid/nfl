@@ -36,7 +36,7 @@ CREATE TABLE GROUPS (
     document JSONB NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-CREATE UNIQUE INDEX tournament_gruop_unique_name_idx ON GROUPS (tournament_id,(document->>'name'));
+CREATE UNIQUE INDEX tournament_group_unique_name_idx ON GROUPS (tournament_id,(document->>'name'));
 
 CREATE TABLE TOURNAMENTS (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
