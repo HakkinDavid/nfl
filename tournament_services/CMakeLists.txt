@@ -30,11 +30,13 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         nlohmann_json::nlohmann_json
         libpqxx::pqxx
         unofficial::activemq-cpp::activemq-cpp
-        tournament_common)
+        tournament_common
+)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${HYPODERMIC_INCLUDE_DIRS})
 
 configure_file(
         ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/configuration.json   # source file
         ${CMAKE_BINARY_DIR}/${PROJECT_NAME}/configuration.json  # destination
-        COPYONLY)
+        COPYONLY
+)
