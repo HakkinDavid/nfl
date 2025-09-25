@@ -8,6 +8,9 @@
 #include "domain/Match.hpp"
 
 namespace domain {
+    struct DuplicateEntryException : public std::runtime_error {
+        DuplicateEntryException() : std::runtime_error("Entry already exists.") {}
+    };
 
     inline void to_json(nlohmann::json& json, const Team& team) {
         json = {{"id", team.Id}, {"name", team.Name}};

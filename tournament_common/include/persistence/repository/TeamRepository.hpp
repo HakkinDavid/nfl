@@ -57,12 +57,18 @@ public:
         auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
         nlohmann::json teamBody = entity;
 
-        pqxx::work tx(*(connection->connection));
-        pqxx::result result = tx.exec(pqxx::prepped{"insert_team"}, teamBody.dump());
+        try {
+            pqxx::work tx(*(connection->connection));
+            pqxx::result result = tx.exec_prepared("insert_team", teamBody.dump());
+            tx.commit();
 
-        tx.commit();
+            static std::string lastId;
+            lastId = result[0]["id"].as<std::string>();
+            return lastId;
 
-        return result[0]["id"].c_str();
+        } catch (const pqxx::unique_violation &e) {
+            throw domain::DuplicateEntryException();
+        }
     }
 
     std::string_view Update(const domain::Team &entity) override {

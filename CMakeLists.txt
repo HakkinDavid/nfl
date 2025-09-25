@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.31.6)
-project(Tournaments)
+project(nfl)
 
 cmake_policy(SET CMP0135 NEW)
 
