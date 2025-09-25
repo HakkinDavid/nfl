@@ -9,15 +9,12 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <memory>
-#include <print>
 
 #include "persistence/repository/IRepository.hpp"
 #include "persistence/repository/TeamRepository.hpp"
 #include "RunConfiguration.hpp"
 #include "cms/ConnectionManager.hpp"
 #include "delegate/TeamDelegate.hpp"
-#include "delegate/GroupDelegate.hpp"
-#include "controller/GroupController.hpp"
 #include "controller/TeamController.hpp"
 #include "controller/TournamentController.hpp"
 #include "delegate/TournamentDelegate.hpp"
@@ -63,9 +60,6 @@ namespace config {
                 .as<ITournamentDelegate>()
                 .singleInstance();
         builder.registerType<TournamentController>().singleInstance();
-
-        builder.registerType<GroupDelegate>().singleInstance();
-        builder.registerType<GroupController>().singleInstance();
 
         return builder.build();
     }

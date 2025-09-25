@@ -1,23 +1,15 @@
 //
 // Created by tomas on 8/31/25.
 //
-
-#include <string>
 #include <string_view>
 #include <memory>
 
 #include "delegate/TournamentDelegate.hpp"
 
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
+#include "persistence/repository/IRepository.hpp"
 
-#include "persistence/repository/TournamentRepository.hpp"
-
-TournamentDelegate::TournamentDelegate(
-    const std::shared_ptr<TournamentRepository>& repository,
-    const std::shared_ptr<IResolver<IQueueMessageProducer>>& queueResolver)
-    : tournamentRepository(std::move(repository)),
-      queueResolver(std::move(queueResolver)){}
+TournamentDelegate::TournamentDelegate(std::shared_ptr<IRepository<domain::Tournament, std::string> > repository, std::shared_ptr<QueueMessageProducer> producer) : tournamentRepository(std::move(repository)), producer(std::move(producer)) {
+}
 
 std::string TournamentDelegate::CreateTournament(std::shared_ptr<domain::Tournament> tournament) {
     //fill groups according to max groups
@@ -27,13 +19,11 @@ std::string TournamentDelegate::CreateTournament(std::shared_ptr<domain::Tournam
     // }
 
     std::string id = tournamentRepository->Create(*tp);
-    nlohmann::json event;
-    event["tournamentID"] = id;
-    queueResolver->Resolve("tournamentAddTeamQueue")->SendMessage(event.dump(), "tournament-add-team");
+    producer->SendMessage(id, "tournament.created");
 
     //if groups are completed also create matches
 
-    return tp->Name();
+    return id;
 }
 
 std::vector<std::shared_ptr<domain::Tournament> > TournamentDelegate::ReadAll() {

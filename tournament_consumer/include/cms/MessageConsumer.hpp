@@ -10,7 +10,7 @@
 #include <cms/MessageConsumer.h>
 #include <print>
 
-class QueueMessageProducer: public cms::MessageListener{
+class MessageProducer: public cms::MessageListener{
 public:
     void SendMessage(const std::string_view& message) {
         std::shared_ptr<activemq::core::ActiveMQConnectionFactory> connectionFactory = std::make_shared<activemq::core::ActiveMQConnectionFactory>("failover://(tcp://localhost:61616)");
