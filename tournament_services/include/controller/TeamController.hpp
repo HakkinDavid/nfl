@@ -19,7 +19,7 @@
 
 static const std::regex ID_VALUE("[A-Za-z0-9\\-]+");
 
-class TeamController {
+class TeamController { // why are the functions defined here? this is a header
     std::shared_ptr<ITeamDelegate> teamDelegate;
 public:
     explicit TeamController(std::shared_ptr<ITeamDelegate> teamDelegate) : teamDelegate(std::move(teamDelegate)) {}
@@ -51,12 +51,23 @@ public:
             response.code = crow::BAD_REQUEST;
             return response;
         }
-        auto requestBody = nlohmann::json::parse(request.body);
-        domain::Team team = requestBody;
 
-        auto createdId = teamDelegate->SaveTeam(team);
-        response.code = crow::CREATED;
-        response.add_header("location", createdId.data());
+        try {
+            auto requestBody = nlohmann::json::parse(request.body);
+            domain::Team team = requestBody;
+
+            auto createdId = teamDelegate->SaveTeam(team);
+            response.code = crow::CREATED; // 201
+            response.add_header("location", createdId.data());
+
+        } catch (const domain::DuplicateEntryException& e) {
+            response.code = crow::CONFLICT; // 409
+            response.body = "Team with that name already exists.";
+
+        } catch (const std::exception& e) {
+            response.code = crow::INTERNAL_SERVER_ERROR; // 500
+            response.body = std::string("An internal error occurred: ") + e.what();
+        }
 
         return response;
     }

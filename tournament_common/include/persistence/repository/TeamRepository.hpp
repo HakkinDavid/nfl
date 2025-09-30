@@ -40,21 +40,35 @@ public:
     }
 
     std::shared_ptr<domain::Team> ReadById(std::string_view id) override {
-        return std::make_shared<domain::Team>();
+        auto pooled = connectionProvider->Connection();
+        auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
+
+        pqxx::work tx(*(connection->connection));
+        pqxx::result result = tx.exec(pqxx::prepped{"select_team_by_id"}, id.data());
+        tx.commit();
+        auto team = std::make_shared<domain::Team>( nlohmann::json::parse(result[0]["document"].c_str()));
+        team->Id = result[0]["id"].c_str();
+
+        return team;
     }
 
     std::string_view Create(const domain::Team &entity) override {
-
         auto pooled = connectionProvider->Connection();
         auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
         nlohmann::json teamBody = entity;
 
-        pqxx::work tx(*(connection->connection));
-        pqxx::result result = tx.exec(pqxx::prepped{"insert_team"}, teamBody.dump());
+        try {
+            pqxx::work tx(*(connection->connection));
+            pqxx::result result = tx.exec_prepared("insert_team", teamBody.dump());
+            tx.commit();
 
-        tx.commit();
+            static std::string lastId;
+            lastId = result[0]["id"].as<std::string>();
+            return lastId;
 
-        return result[0]["id"].c_str();
+        } catch (const pqxx::unique_violation &e) {
+            throw domain::DuplicateEntryException();
+        }
     }
 
     std::string_view Update(const domain::Team &entity) override {
