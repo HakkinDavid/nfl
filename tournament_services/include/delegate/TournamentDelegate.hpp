@@ -18,6 +18,7 @@ public:
     explicit TournamentDelegate(std::shared_ptr<IRepository<domain::Tournament, std::string>> repository, std::shared_ptr<QueueMessageProducer> producer);
 
     std::string CreateTournament(std::shared_ptr<domain::Tournament> tournament) override;
+    std::shared_ptr<domain::Tournament> GetTournament(std::string_view id) override;
     std::vector<std::shared_ptr<domain::Tournament>> ReadAll() override;
 };
 

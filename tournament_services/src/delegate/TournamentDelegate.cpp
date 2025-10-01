@@ -26,6 +26,10 @@ std::string TournamentDelegate::CreateTournament(std::shared_ptr<domain::Tournam
     return id;
 }
 
+std::shared_ptr<domain::Tournament> TournamentDelegate::GetTournament(std::string_view id) {
+    return tournamentRepository->ReadById(id.data());
+}
+
 std::vector<std::shared_ptr<domain::Tournament> > TournamentDelegate::ReadAll() {
     return tournamentRepository->ReadAll();
 }

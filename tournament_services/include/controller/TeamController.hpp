@@ -15,7 +15,7 @@
 
 static const std::regex ID_VALUE("[A-Za-z0-9\\-]+");
 
-class TeamController {
+class TeamController { // why are the functions defined here? this is a header
     std::shared_ptr<ITeamDelegate> teamDelegate;
 public:
     explicit TeamController(const std::shared_ptr<ITeamDelegate>& teamDelegate);
