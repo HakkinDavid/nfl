@@ -18,8 +18,12 @@ std::shared_ptr<domain::Team> TeamDelegate::GetTeam(std::string_view id) {
 }
 
 std::string_view TeamDelegate::SaveTeam(const domain::Team& team){
-
     return teamRepository->Create(team);
+}
+
+std::string_view TeamDelegate::UpdateTeam(const std::string& teamId, const domain::Team& team) {
+    domain::Team teamToUpdate{teamId, team.Name};
+    return teamRepository->Update(teamToUpdate);
 }
 
 

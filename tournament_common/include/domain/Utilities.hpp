@@ -12,6 +12,10 @@ namespace domain {
         DuplicateEntryException() : std::runtime_error("Entry already exists.") {}
     };
 
+    struct NotFoundException : public std::runtime_error {
+        NotFoundException() : std::runtime_error("Entry not found.") {}
+    };
+
     inline void to_json(nlohmann::json& json, const Team& team) {
         json = {{"id", team.Id}, {"name", team.Name}};
     }

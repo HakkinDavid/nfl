@@ -72,7 +72,26 @@ public:
     }
 
     std::string_view Update(const domain::Team &entity) override {
-        return "newID";
+        auto pooled = connectionProvider->Connection();
+        auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
+
+        try {
+            pqxx::work tx(*(connection->connection));
+            pqxx::result result = tx.exec(pqxx::prepped{"update_team_name"}, pqxx::params{entity.Name, entity.Id});
+            tx.commit();
+
+            // Si el resultado está vacío, significa que no se encontró el ID.
+            if (result.empty()) {
+                throw domain::NotFoundException();
+            }
+
+            return result[0]["id"].as<std::string>();
+
+        } catch (const pqxx::unique_violation &e) {
+            throw domain::DuplicateEntryException();
+        } catch (const pqxx::sql_error &e) {
+            throw;
+        }
     }
 
 

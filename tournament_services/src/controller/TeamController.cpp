@@ -13,7 +13,7 @@
 TeamController::TeamController(const std::shared_ptr<ITeamDelegate>& teamDelegate) : teamDelegate(teamDelegate) {}
 
 crow::response TeamController::getTeam(const std::string& teamId) const {
-    if(!std::regex_match(teamId, ID_VALUE)) {
+    if(!std::regex_match(teamId, UUID_REGEX)) {
         return crow::response{crow::BAD_REQUEST, "Invalid ID format"};
     }
 
@@ -61,6 +61,37 @@ crow::response TeamController::SaveTeam(const crow::request& request) const {
     return response;
 }
 
+crow::response TeamController::UpdateTeam(const crow::request& request, const std::string& teamId) const {
+    // Validar el formato del ID
+    if(!std::regex_match(teamId, UUID_REGEX)) {
+        return crow::response{crow::BAD_REQUEST, "Invalid ID format"};
+    }
+
+    // Validar y parsear el cuerpo JSON
+    if(!nlohmann::json::accept(request.body)) {
+        return crow::response{crow::BAD_REQUEST, "Invalid JSON body"};
+    }
+
+    auto requestBody = nlohmann::json::parse(request.body);
+    domain::Team team = requestBody;
+
+    try {
+        teamDelegate->UpdateTeam(teamId, team);
+        return crow::response{crow::NO_CONTENT}; // HTTP 204
+    } catch (const domain::NotFoundException& e) {
+        // Si atrapamos NotFoundException, devolvemos HTTP 404.
+        return crow::response{crow::NOT_FOUND, "Team not found"};
+    } catch (const domain::DuplicateEntryException& e) {
+        // Si el nombre ya existe, devolvemos un Conflict (409).
+        return crow::response{crow::CONFLICT, "Team with that name already exists."};
+
+    } catch (const std::exception& e) {
+        // Cualquier otro error como 500.
+        return crow::response{crow::INTERNAL_SERVER_ERROR, "An internal error occurred."};
+    }
+}
+
 REGISTER_ROUTE(TeamController, getTeam, "/teams/<string>", "GET"_method)
 REGISTER_ROUTE(TeamController, getAllTeams, "/teams", "GET"_method)
 REGISTER_ROUTE(TeamController, SaveTeam, "/teams", "POST"_method)
+REGISTER_ROUTE(TeamController, UpdateTeam, "/teams/<string>", "PATCH"_method)

@@ -14,7 +14,7 @@
 #include "delegate/ITeamDelegate.hpp"
 #include "common/Constants.hpp"
 
-class TeamController { // why are the functions defined here? this is a header
+class TeamController {
     std::shared_ptr<ITeamDelegate> teamDelegate;
 public:
     explicit TeamController(const std::shared_ptr<ITeamDelegate>& teamDelegate);
@@ -22,6 +22,7 @@ public:
     [[nodiscard]] crow::response getTeam(const std::string& teamId) const;
     [[nodiscard]] crow::response getAllTeams() const;
     [[nodiscard]] crow::response SaveTeam(const crow::request& request) const;
+    [[nodiscard]] crow::response UpdateTeam(const crow::request& request, const std::string& teamId) const;
 };
 
 
