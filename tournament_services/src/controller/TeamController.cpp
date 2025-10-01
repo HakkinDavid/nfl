@@ -24,7 +24,7 @@ crow::response TeamController::getTeam(const std::string& teamId) const {
             response.add_header(CONTENT_TYPE_HEADER, JSON_CONTENT_TYPE);
             return response;
         }
-        return crow::response{crow::INTERNAL_SERVER_ERROR, "An internal error occurred."};
+        return crow::response{crow::NOT_FOUND, "Team not found"};
     } catch (const domain::NotFoundException& e) {
         return crow::response{crow::NOT_FOUND, "Team not found"};
     } catch (const std::exception& e) {
