@@ -52,7 +52,7 @@ namespace config {
         builder.registerType<QueueResolver>().as<IResolver<IQueueMessageProducer> >().named("queueResolver").
                 singleInstance();
 
-        builder.registerType<TeamRepository>().as<IRepository<domain::Team, std::string_view> >().singleInstance();
+        builder.registerType<TeamRepository>().as<IRepository<domain::Team, std::string> >().singleInstance();
         builder.registerType<GroupRepository>().as<IGroupRepository>().singleInstance();
 
         builder.registerType<TeamDelegate>().as<ITeamDelegate>().singleInstance();

@@ -9,10 +9,10 @@
 
 class TeamDelegateMock : public ITeamDelegate {
     public:
-    MOCK_METHOD(std::shared_ptr<domain::Team>, GetTeam, (const std::string_view id), (override));
+    MOCK_METHOD(std::shared_ptr<domain::Team>, GetTeam, (const std::string id), (override));
     MOCK_METHOD(std::vector<std::shared_ptr<domain::Team>>, GetAllTeams, (), (override));
-    MOCK_METHOD(std::string_view, SaveTeam, (const domain::Team&), (override));
-    MOCK_METHOD(std::string_view, UpdateTeam, (const std::string& teamId, const domain::Team& team), (override));
+    MOCK_METHOD((std::expected<std::string, std::string>), SaveTeam, (const domain::Team& team), (override));
+    MOCK_METHOD((std::expected<std::string, std::string>), UpdateTeam, (const std::string& teamId, const domain::Team& team), (override));
 };
 
 class TeamControllerTest : public ::testing::Test{
@@ -37,7 +37,7 @@ TEST_F(TeamControllerTest, SaveTeamTest_Success201) {
     EXPECT_CALL(*teamDelegateMock, SaveTeam(::testing::_))
         .WillOnce(testing::DoAll(
                 testing::SaveArg<0>(&capturedTeam),
-                testing::Return("new-id")
+                testing::Return(std::expected<std::string, std::string>{"new-id"})
             )
         );
 
@@ -57,7 +57,7 @@ TEST_F(TeamControllerTest, SaveTeamTest_Success201) {
 TEST_F(TeamControllerTest, SaveTeam_Conflict409) {
     // Simulamos que el Delegate lanza una DuplicateEntryException
     EXPECT_CALL(*teamDelegateMock, SaveTeam(::testing::_))
-        .WillOnce(testing::Throw(domain::DuplicateEntryException()));
+    .WillOnce(testing::Return(std::unexpected("Entry already exists.")));
 
     nlohmann::json teamRequestBody = {{"name", "Existing Team Name"}};
     crow::request teamRequest;
@@ -166,7 +166,7 @@ TEST_F(TeamControllerTest, UpdateTeam_Success204) {
         .WillOnce(testing::DoAll(
             testing::SaveArg<0>(&capturedId),
             testing::SaveArg<1>(&capturedTeam),
-            testing::Return(teamIdToUpdate) // Simulamos una respuesta exitosa
+            testing::Return(std::expected<std::string, std::string>{teamIdToUpdate}) // Simulamos una respuesta exitosa
         ));
 
     nlohmann::json teamRequestBody = {{"name", "Updated Team Name"}};
@@ -188,7 +188,7 @@ TEST_F(TeamControllerTest, UpdateTeam_NotFound404) {
 
     // Simulamos que el Delegate lanza una NotFoundException
     EXPECT_CALL(*teamDelegateMock, UpdateTeam(::testing::_, ::testing::_))
-        .WillOnce(testing::Throw(domain::NotFoundException()));
+    .WillOnce(testing::Return(std::unexpected("Entry not found.")));
 
     nlohmann::json teamRequestBody = {{"name", "Updated Team Name"}};
     crow::request teamRequest;
@@ -205,7 +205,7 @@ TEST_F(TeamControllerTest, UpdateTeam_Conflict409) {
 
     // Simulamos que el Delegate lanza una DuplicateEntryException
     EXPECT_CALL(*teamDelegateMock, UpdateTeam(::testing::_, ::testing::_))
-        .WillOnce(testing::Throw(domain::DuplicateEntryException()));
+    .WillOnce(testing::Return(std::unexpected("Entry already exists.")));
 
     nlohmann::json teamRequestBody = {{"name", "Name that already belongs to another team"}};
     crow::request teamRequest;

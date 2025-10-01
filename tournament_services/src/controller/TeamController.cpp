@@ -47,27 +47,33 @@ crow::response TeamController::SaveTeam(const crow::request& request) const {
         response.code = crow::BAD_REQUEST;
         return response;
     }
-    try {
-        auto requestBody = nlohmann::json::parse(request.body);
-        domain::Team team = requestBody;
 
-        auto createdId = teamDelegate->SaveTeam(team);
+    auto requestBody = nlohmann::json::parse(request.body);
+    domain::Team team = requestBody;
+
+    // Devuelve un std::expected
+    auto createdIdResult = teamDelegate->SaveTeam(team);
+
+    if (createdIdResult.has_value()) {
         response.code = crow::CREATED; // 201
-        response.add_header("location", createdId.data());
-
-    } catch (const domain::DuplicateEntryException& e) {
-        response.code = crow::CONFLICT; // 409
-        response.body = "Team with that name already exists.";
-
-    } catch (const std::exception& e) {
-        response.code = crow::INTERNAL_SERVER_ERROR; // 500
-        response.body = std::string("An internal error occurred: ") + e.what();
+        response.add_header("location", createdIdResult.value());
+    } else {
+        const std::string& errorMessage = createdIdResult.error();
+        if (errorMessage.find("already exists") != std::string::npos) {
+            response.code = crow::CONFLICT; // 409
+            response.body = errorMessage;
+        } else {
+            response.code = crow::INTERNAL_SERVER_ERROR; // 500
+            response.body = errorMessage;
+        }
     }
 
     return response;
 }
 
 crow::response TeamController::UpdateTeam(const crow::request& request, const std::string& teamId) const {
+    crow::response response;
+
     // Validar el formato del ID
     if(!std::regex_match(teamId, UUID_REGEX)) {
         return crow::response{crow::BAD_REQUEST, "Invalid ID format"};
@@ -81,20 +87,25 @@ crow::response TeamController::UpdateTeam(const crow::request& request, const st
     auto requestBody = nlohmann::json::parse(request.body);
     domain::Team team = requestBody;
 
-    try {
-        teamDelegate->UpdateTeam(teamId, team);
-        return crow::response{crow::NO_CONTENT}; // HTTP 204
-    } catch (const domain::NotFoundException& e) {
-        // Si atrapamos NotFoundException, devolvemos HTTP 404.
-        return crow::response{crow::NOT_FOUND, "Team not found"};
-    } catch (const domain::DuplicateEntryException& e) {
-        // Si el nombre ya existe, devolvemos un Conflict (409).
-        return crow::response{crow::CONFLICT, "Team with that name already exists."};
+    auto updateResult = teamDelegate->UpdateTeam(teamId, team);
 
-    } catch (const std::exception& e) {
-        // Cualquier otro error como 500.
-        return crow::response{crow::INTERNAL_SERVER_ERROR, "An internal error occurred."};
+    if (updateResult.has_value()) {
+        response.code = crow::NO_CONTENT; // 204
+    } else {
+        const std::string& errorMessage = updateResult.error();
+        if (errorMessage.find("not found") != std::string::npos) {
+            response.code = crow::NOT_FOUND; // 404
+            response.body = errorMessage;
+        } else if (errorMessage.find("already exists") != std::string::npos) {
+            response.code = crow::CONFLICT; // 409
+            response.body = errorMessage;
+        } else {
+            response.code = crow::INTERNAL_SERVER_ERROR; // 500
+            response.body = errorMessage;
+        }
     }
+
+    return response;
 }
 
 REGISTER_ROUTE(TeamController, getTeam, "/teams/<string>", "GET"_method)

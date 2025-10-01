@@ -16,7 +16,7 @@
 #include "domain/Utilities.hpp"
 
 
-class TeamRepository : public IRepository<domain::Team, std::string_view> {
+class TeamRepository : public IRepository<domain::Team, std::string> {
     std::shared_ptr<IDbConnectionProvider> connectionProvider;
 public:
 
@@ -39,7 +39,7 @@ public:
         return teams;
     }
 
-    std::shared_ptr<domain::Team> ReadById(std::string_view id) override {
+    std::shared_ptr<domain::Team> ReadById(std::string id) override {
         auto pooled = connectionProvider->Connection();
         auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
 
@@ -57,7 +57,7 @@ public:
         return team;
     }
 
-    std::string_view Create(const domain::Team &entity) override {
+    std::string Create(const domain::Team &entity) override {
         auto pooled = connectionProvider->Connection();
         auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
         nlohmann::json teamBody = entity;
@@ -67,16 +67,14 @@ public:
             pqxx::result result = tx.exec(pqxx::prepped{"insert_team"}, teamBody.dump());
             tx.commit();
 
-            static std::string lastId;
-            lastId = result[0]["id"].as<std::string>();
-            return lastId;
+            return result[0]["id"].as<std::string>();
 
         } catch (const pqxx::unique_violation &e) {
             throw domain::DuplicateEntryException();
         }
     }
 
-    std::string_view Update(const domain::Team &entity) override {
+    std::string Update(const domain::Team &entity) override {
         auto pooled = connectionProvider->Connection();
         auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
 
@@ -100,7 +98,7 @@ public:
     }
 
 
-    void Delete(std::string_view id) override{
+    void Delete(std::string id) override{
         
     }
 };
