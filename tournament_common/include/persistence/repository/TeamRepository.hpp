@@ -59,7 +59,7 @@ public:
 
         try {
             pqxx::work tx(*(connection->connection));
-            pqxx::result result = tx.exec_prepared("insert_team", teamBody.dump());
+            pqxx::result result = tx.exec(pqxx::prepped{"insert_team"}, teamBody.dump());
             tx.commit();
 
             static std::string lastId;
