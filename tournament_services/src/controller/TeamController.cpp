@@ -17,13 +17,19 @@ crow::response TeamController::getTeam(const std::string& teamId) const {
         return crow::response{crow::BAD_REQUEST, "Invalid ID format"};
     }
 
-    if(auto team = teamDelegate->GetTeam(teamId); team != nullptr) {
-        nlohmann::json body = team;
-        auto response = crow::response{crow::OK, body.dump()};
-        response.add_header(CONTENT_TYPE_HEADER, JSON_CONTENT_TYPE);
-        return response;
+    try {
+        if(auto team = teamDelegate->GetTeam(teamId); team != nullptr) {
+            nlohmann::json body = team;
+            auto response = crow::response{crow::OK, body.dump()};
+            response.add_header(CONTENT_TYPE_HEADER, JSON_CONTENT_TYPE);
+            return response;
+        }
+        return crow::response{crow::INTERNAL_SERVER_ERROR, "An internal error occurred."};
+    } catch (const domain::NotFoundException& e) {
+        return crow::response{crow::NOT_FOUND, "Team not found"};
+    } catch (const std::exception& e) {
+        return crow::response{crow::INTERNAL_SERVER_ERROR, "An internal error occurred."};
     }
-    return crow::response{crow::NOT_FOUND, "team not found"};
 }
 
 crow::response TeamController::getAllTeams() const {

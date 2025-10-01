@@ -46,6 +46,11 @@ public:
         pqxx::work tx(*(connection->connection));
         pqxx::result result = tx.exec(pqxx::prepped{"select_team_by_id"}, id.data());
         tx.commit();
+
+        if (result.empty()) {
+            throw domain::NotFoundException();
+        }
+
         auto team = std::make_shared<domain::Team>( nlohmann::json::parse(result[0]["document"].c_str()));
         team->Id = result[0]["id"].c_str();
 
