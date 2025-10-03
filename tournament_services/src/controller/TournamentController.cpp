@@ -27,6 +27,17 @@ crow::response TournamentController::CreateTournament(const crow::request &reque
     return response;
 }
 
+crow::response TournamentController::UpdateTournament(const crow::request &request) const
+{
+    nlohmann::json body = nlohmann::json::parse(request.body);
+    const std::shared_ptr<domain::Tournament> tournament = std::make_shared<domain::Tournament>(body);
+
+    tournamentDelegate->UpdateTournament(tournament);
+    crow::response response;
+    response.code = crow::OK;
+    return response;
+}
+
 crow::response TournamentController::GetTournament(const std::string &tournamentId) const
 {
     if (!std::regex_match(tournamentId, ID_VALUE))
@@ -56,5 +67,6 @@ crow::response TournamentController::ReadAll() const
 }
 
 REGISTER_ROUTE(TournamentController, CreateTournament, "/tournaments", "POST"_method)
+REGISTER_ROUTE(TournamentController, UpdateTournament, "/tournaments", "PATCH"_method)
 REGISTER_ROUTE(TournamentController, GetTournament, "/tournaments/<string>", "GET"_method)
 REGISTER_ROUTE(TournamentController, ReadAll, "/tournaments", "GET"_method)

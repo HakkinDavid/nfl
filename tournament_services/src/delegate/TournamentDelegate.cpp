@@ -26,6 +26,13 @@ std::string TournamentDelegate::CreateTournament(std::shared_ptr<domain::Tournam
     return id;
 }
 
+void TournamentDelegate::UpdateTournament(std::shared_ptr<domain::Tournament> tournament) {
+    std::shared_ptr<domain::Tournament> tp = std::move(tournament);
+    std::string id = tournamentRepository->Update(*tp);
+    producer->SendMessage(id, "tournament.updated");
+    return;
+}
+
 std::shared_ptr<domain::Tournament> TournamentDelegate::GetTournament(std::string_view id) {
     return tournamentRepository->ReadById(id.data());
 }

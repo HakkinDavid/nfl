@@ -16,6 +16,7 @@ int main() {
         std::thread tournamentCreatedThread([&] {
             auto listener = container->resolve<QueueMessageConsumer>();
             listener->Start("tournament.created");
+            listener->Start("tournament.updated");
         });
 
         tournamentCreatedThread.join();
