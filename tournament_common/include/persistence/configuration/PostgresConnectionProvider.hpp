@@ -31,6 +31,7 @@ public:
             "update_team_name",
                 "UPDATE teams SET document = jsonb_set(document, '{name}', to_jsonb($1::text)) WHERE id = $2 RETURNING id"
             );
+            connectionPool.back()->prepare("delete_team", "delete from TEAMS where id = $1");
 
             connectionPool.back()->prepare("insert_group", "insert into GROUPS (tournament_id, document) values($1, $2) RETURNING id");
             connectionPool.back()->prepare("select_groups_by_tournament", "select * from GROUPS where tournament_id = $1");

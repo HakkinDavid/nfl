@@ -13,6 +13,7 @@ class TeamDelegateMock : public ITeamDelegate {
     MOCK_METHOD(std::vector<std::shared_ptr<domain::Team>>, GetAllTeams, (), (override));
     MOCK_METHOD((std::expected<std::string, std::string>), SaveTeam, (const domain::Team& team), (override));
     MOCK_METHOD((std::expected<std::string, std::string>), UpdateTeam, (const std::string& teamId, const domain::Team& team), (override));
+    MOCK_METHOD((std::expected<void, std::string>), DeleteTeam, (const std::string& teamId), (override));
 };
 
 class TeamControllerTest : public ::testing::Test{
@@ -215,4 +216,41 @@ TEST_F(TeamControllerTest, UpdateTeam_Conflict409) {
 
     // Verificamos que la respuesta sea 409 Conflict
     EXPECT_EQ(crow::CONFLICT, response.code);
+}
+
+// --- Pruebas para DELETE /teams/{id} ---
+
+TEST_F(TeamControllerTest, DeleteTeam_Success204) {
+    const std::string teamIdToDelete = "feb3b050-f7b8-4610-808a-1b01b8d61f2e";
+
+    // Simulamos que el delegate procesa el borrado y devuelve un 'expected' exitoso.
+    EXPECT_CALL(*teamDelegateMock, DeleteTeam(teamIdToDelete))
+        .WillOnce(testing::Return(std::expected<void, std::string>{}));
+
+    crow::response response = teamController->DeleteTeam(teamIdToDelete);
+
+    // Verificamos que el código de respuesta es 204 No Content.
+    EXPECT_EQ(crow::NO_CONTENT, response.code);
+}
+
+TEST_F(TeamControllerTest, DeleteTeam_NotFound404) {
+    const std::string teamIdToDelete = "feb3b050-f7b8-4610-808a-1b01b8d61f2e";
+
+    // Simulamos que el delegate devuelve un error porque el equipo no se encontró.
+    EXPECT_CALL(*teamDelegateMock, DeleteTeam(teamIdToDelete))
+        .WillOnce(testing::Return(std::unexpected("Entry not found.")));
+
+    crow::response response = teamController->DeleteTeam(teamIdToDelete);
+
+    EXPECT_EQ(crow::NOT_FOUND, response.code);
+    EXPECT_EQ("Entry not found.", response.body);
+}
+
+TEST_F(TeamControllerTest, DeleteTeam_InvalidFormat400) {
+    // La validación ocurre antes de llamar al delegate.
+    const std::string invalidId = "not-a-uuid";
+
+    crow::response response = teamController->DeleteTeam(invalidId);
+
+    EXPECT_EQ(crow::BAD_REQUEST, response.code);
 }

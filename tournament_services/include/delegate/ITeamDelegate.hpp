@@ -14,6 +14,7 @@ class ITeamDelegate {
     virtual std::vector<std::shared_ptr<domain::Team>> GetAllTeams() = 0;
     virtual std::expected<std::string, std::string> SaveTeam(const domain::Team& team) = 0;
     virtual std::expected<std::string, std::string> UpdateTeam(const std::string& teamId, const domain::Team& team) = 0;
+    virtual std::expected<void, std::string> DeleteTeam(const std::string& teamId) = 0;
 };
 
 #endif /* ITEAM_DELEGATE_HPP */

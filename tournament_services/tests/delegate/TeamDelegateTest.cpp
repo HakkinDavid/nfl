@@ -161,3 +161,29 @@ TEST_F(TeamDelegateTest, UpdateTeam_FailsOnNotFound) {
     ASSERT_FALSE(result.has_value()); // Fue un error.
     EXPECT_EQ("Entry not found.", result.error()); // El mensaje es el correcto.
 }
+
+// Pruebas para DeleteTeam
+
+TEST_F(TeamDelegateTest, DeleteTeam_Success) {
+    const std::string teamIdToDelete = "existing-uuid";
+
+    EXPECT_CALL(*teamRepositoryMock, Delete(teamIdToDelete))
+        .WillOnce(testing::Return());
+
+    auto result = teamDelegate->DeleteTeam(teamIdToDelete);
+    
+    EXPECT_TRUE(result.has_value());
+}
+
+TEST_F(TeamDelegateTest, DeleteTeam_FailsOnNotFound) {
+    const std::string teamIdToDelete = "non-existent-uuid";
+
+    // Simulamos que el repositorio lanza una excepción porque no encuentra el ID.
+    EXPECT_CALL(*teamRepositoryMock, Delete(teamIdToDelete))
+        .WillOnce(testing::Throw(domain::NotFoundException()));
+
+    auto result = teamDelegate->DeleteTeam(teamIdToDelete);
+
+    ASSERT_FALSE(result.has_value()); // Verificamos que el resultado fue un error.
+    EXPECT_EQ("Entry not found.", result.error()); // Verificamos el mensaje de error.
+}

@@ -18,6 +18,7 @@ class TeamDelegate : public ITeamDelegate {
     std::vector<std::shared_ptr<domain::Team>> GetAllTeams() override;
     std::expected<std::string, std::string> SaveTeam( const domain::Team& team) override;
     std::expected<std::string, std::string> UpdateTeam(const std::string& teamId, const domain::Team& team) override;
+    std::expected<void, std::string> DeleteTeam(const std::string& teamId) override;
 };
 
 

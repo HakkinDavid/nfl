@@ -36,4 +36,11 @@ std::expected<std::string, std::string> TeamDelegate::UpdateTeam(const std::stri
     }
 }
 
-
+std::expected<void, std::string> TeamDelegate::DeleteTeam(const std::string& teamId) {
+    try {
+        teamRepository->Delete(teamId);
+        return {};
+    } catch (const domain::NotFoundException& e) {
+        return std::unexpected(e.what());
+    }
+}

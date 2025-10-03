@@ -99,7 +99,16 @@ public:
 
 
     void Delete(std::string id) override{
-        
+        auto pooled = connectionProvider->Connection();
+        auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
+
+        pqxx::work tx(*(connection->connection));
+        pqxx::result result = tx.exec(pqxx::prepped{"delete_team"}, id);
+        tx.commit();
+
+        if (result.affected_rows() == 0) {
+            throw domain::NotFoundException();
+        }
     }
 };
 

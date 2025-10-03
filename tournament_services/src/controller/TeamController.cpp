@@ -108,7 +108,24 @@ crow::response TeamController::UpdateTeam(const crow::request& request, const st
     return response;
 }
 
+crow::response TeamController::DeleteTeam(const std::string& teamId) const {
+    if(!std::regex_match(teamId, UUID_REGEX)) {
+        return crow::response{crow::BAD_REQUEST, "Invalid ID format"};
+    }
+
+    auto deleteResult = teamDelegate->DeleteTeam(teamId);
+
+    if (deleteResult.has_value()) {
+        // El equipo fue borrado. El estándar para DELETE es 204 No Content.
+        return crow::response{crow::NO_CONTENT};
+    } else {
+        // Si no se encontró el id.
+        return crow::response{crow::NOT_FOUND, deleteResult.error()};
+    }
+}
+
 REGISTER_ROUTE(TeamController, getTeam, "/teams/<string>", "GET"_method)
 REGISTER_ROUTE(TeamController, getAllTeams, "/teams", "GET"_method)
 REGISTER_ROUTE(TeamController, SaveTeam, "/teams", "POST"_method)
 REGISTER_ROUTE(TeamController, UpdateTeam, "/teams/<string>", "PATCH"_method)
+REGISTER_ROUTE(TeamController, DeleteTeam, "/teams/<string>", "DELETE"_method)
