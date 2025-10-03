@@ -17,6 +17,7 @@ int main() {
             auto listener = container->resolve<QueueMessageConsumer>();
             listener->Start("tournament.created");
             listener->Start("tournament.updated");
+            listener->Start("tournament.deleted");
         });
 
         tournamentCreatedThread.join();

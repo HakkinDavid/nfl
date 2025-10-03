@@ -6,21 +6,25 @@
 #define TOURNAMENTS_TOURNAMENTDELEGATE_HPP
 
 #include <string>
+#include <expected>
 
 #include "cms/QueueMessageProducer.hpp"
 #include "delegate/ITournamentDelegate.hpp"
 #include "persistence/repository/IRepository.hpp"
 
-class TournamentDelegate : public ITournamentDelegate{
+class TournamentDelegate : public ITournamentDelegate
+{
     std::shared_ptr<IRepository<domain::Tournament, std::string>> tournamentRepository;
     std::shared_ptr<QueueMessageProducer> producer;
+
 public:
     explicit TournamentDelegate(std::shared_ptr<IRepository<domain::Tournament, std::string>> repository, std::shared_ptr<QueueMessageProducer> producer);
 
     std::string CreateTournament(std::shared_ptr<domain::Tournament> tournament) override;
     void UpdateTournament(std::shared_ptr<domain::Tournament> tournament) override;
     std::shared_ptr<domain::Tournament> GetTournament(std::string_view id) override;
+    std::expected<void, std::string> DeleteTournament(const std::string &teamId) override;
     std::vector<std::shared_ptr<domain::Tournament>> ReadAll() override;
 };
 
-#endif //TOURNAMENTS_TOURNAMENTDELEGATE_HPP
+#endif // TOURNAMENTS_TOURNAMENTDELEGATE_HPP

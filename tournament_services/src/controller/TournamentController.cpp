@@ -10,6 +10,7 @@
 
 #include <string>
 #include <utility>
+#include <expected>
 #include "domain/Tournament.hpp"
 #include "domain/Utilities.hpp"
 
@@ -55,6 +56,27 @@ crow::response TournamentController::GetTournament(const std::string &tournament
     return crow::response{crow::NOT_FOUND, "tournament not found"};
 }
 
+crow::response TournamentController::DeleteTournament(const std::string &tournamentId) const
+{
+    if (!std::regex_match(tournamentId, UUID_REGEX))
+    {
+        return crow::response{crow::BAD_REQUEST, "Invalid ID format"};
+    }
+
+    auto deleteResult = tournamentDelegate->DeleteTournament(tournamentId);
+
+    if (deleteResult.has_value())
+    {
+        // El tournamento fue borrado. El estándar para DELETE es 204 No Content.
+        return crow::response{crow::NO_CONTENT};
+    }
+    else
+    {
+        // Si no se encontró el id.
+        return crow::response{crow::NOT_FOUND, deleteResult.error()};
+    }
+}
+
 crow::response TournamentController::ReadAll() const
 {
     nlohmann::json body = tournamentDelegate->ReadAll();
@@ -69,4 +91,5 @@ crow::response TournamentController::ReadAll() const
 REGISTER_ROUTE(TournamentController, CreateTournament, "/tournaments", "POST"_method)
 REGISTER_ROUTE(TournamentController, UpdateTournament, "/tournaments", "PATCH"_method)
 REGISTER_ROUTE(TournamentController, GetTournament, "/tournaments/<string>", "GET"_method)
+REGISTER_ROUTE(TournamentController, DeleteTournament, "/tournaments/<string>", "DELETE"_method)
 REGISTER_ROUTE(TournamentController, ReadAll, "/tournaments", "GET"_method)

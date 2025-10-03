@@ -7,16 +7,19 @@
 
 #include <string>
 #include <memory>
+#include <expected>
 
 #include "domain/Tournament.hpp"
 
-class ITournamentDelegate {
+class ITournamentDelegate
+{
 public:
     virtual ~ITournamentDelegate() = default;
     virtual std::string CreateTournament(std::shared_ptr<domain::Tournament> tournament) = 0;
     virtual void UpdateTournament(std::shared_ptr<domain::Tournament> tournament) = 0;
     virtual std::shared_ptr<domain::Tournament> GetTournament(std::string_view id) = 0;
+    virtual std::expected<void, std::string> DeleteTournament(const std::string &tournamentId) = 0;
     virtual std::vector<std::shared_ptr<domain::Tournament>> ReadAll() = 0;
 };
 
-#endif //TOURNAMENTS_ITOURNAMENTDELEGATE_HPP
+#endif // TOURNAMENTS_ITOURNAMENTDELEGATE_HPP
