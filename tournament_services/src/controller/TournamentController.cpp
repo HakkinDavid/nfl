@@ -9,6 +9,7 @@
 #include "controller/TournamentController.hpp"
 
 #include <string>
+#include <exception>
 #include <utility>
 #include <expected>
 #include "domain/Tournament.hpp"
@@ -21,10 +22,21 @@ crow::response TournamentController::CreateTournament(const crow::request &reque
     nlohmann::json body = nlohmann::json::parse(request.body);
     const std::shared_ptr<domain::Tournament> tournament = std::make_shared<domain::Tournament>(body);
 
-    const std::string id = tournamentDelegate->CreateTournament(tournament);
     crow::response response;
-    response.code = crow::CREATED;
-    response.add_header("location", id);
+    auto createdIdResult = tournamentDelegate->CreateTournament(tournament);
+    if (createdIdResult.has_value()) {
+        response.code = crow::CREATED; // 201
+        response.add_header("location", createdIdResult.value());
+    } else {
+        const std::string& errorMessage = createdIdResult.error();
+        if (errorMessage.find("already exists") != std::string::npos) {
+            response.code = crow::CONFLICT; // 409
+            response.body = errorMessage;
+        } else {
+            response.code = crow::INTERNAL_SERVER_ERROR; // 500
+            response.body = errorMessage;
+        }
+    }
     return response;
 }
 
@@ -33,9 +45,23 @@ crow::response TournamentController::UpdateTournament(const crow::request &reque
     nlohmann::json body = nlohmann::json::parse(request.body);
     const std::shared_ptr<domain::Tournament> tournament = std::make_shared<domain::Tournament>(body);
 
-    tournamentDelegate->UpdateTournament(tournament);
     crow::response response;
-    response.code = crow::OK;
+    auto updateResult = tournamentDelegate->UpdateTournament(tournament);
+    if (updateResult.has_value()) {
+        response.code = crow::NO_CONTENT; // 204
+    } else {
+        const std::string& errorMessage = updateResult.error();
+        if (errorMessage.find("not found") != std::string::npos) {
+            response.code = crow::NOT_FOUND; // 404
+            response.body = errorMessage;
+        } else if (errorMessage.find("already exists") != std::string::npos) {
+            response.code = crow::CONFLICT; // 409
+            response.body = errorMessage;
+        } else {
+            response.code = crow::INTERNAL_SERVER_ERROR; // 500
+            response.body = errorMessage;
+        }
+    }
     return response;
 }
 

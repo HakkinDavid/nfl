@@ -13,7 +13,7 @@ TournamentDelegate::TournamentDelegate(std::shared_ptr<IRepository<domain::Tourn
 {
 }
 
-std::string TournamentDelegate::CreateTournament(std::shared_ptr<domain::Tournament> tournament)
+std::expected<std::string, std::string> TournamentDelegate::CreateTournament(std::shared_ptr<domain::Tournament> tournament)
 {
     // fill groups according to max groups
     std::shared_ptr<domain::Tournament> tp = std::move(tournament);
@@ -29,12 +29,12 @@ std::string TournamentDelegate::CreateTournament(std::shared_ptr<domain::Tournam
     return id;
 }
 
-void TournamentDelegate::UpdateTournament(std::shared_ptr<domain::Tournament> tournament)
+std::expected<std::string, std::string> TournamentDelegate::UpdateTournament(std::shared_ptr<domain::Tournament> tournament)
 {
     std::shared_ptr<domain::Tournament> tp = std::move(tournament);
     std::string id = tournamentRepository->Update(*tp);
     producer->SendMessage(id, "tournament.updated");
-    return;
+    return id;
 }
 
 std::shared_ptr<domain::Tournament> TournamentDelegate::GetTournament(std::string_view id)
