@@ -15,26 +15,28 @@ TournamentDelegate::TournamentDelegate(std::shared_ptr<IRepository<domain::Tourn
 
 std::expected<std::string, std::string> TournamentDelegate::CreateTournament(std::shared_ptr<domain::Tournament> tournament)
 {
-    // fill groups according to max groups
-    std::shared_ptr<domain::Tournament> tp = std::move(tournament);
-    // for (auto[i, g] = std::tuple{0, 'A'}; i < tp->Format().NumberOfGroups(); i++,g++) {
-    //     tp->Groups().push_back(domain::Group{std::format("Tournament {}", g)});
-    // }
-
-    std::string id = tournamentRepository->Create(*tp);
-    producer->SendMessage(id, "tournament.created");
-
-    // if groups are completed also create matches
-
-    return id;
+    try {
+        std::shared_ptr<domain::Tournament> tp = std::move(tournament);
+        std::string id = tournamentRepository->Create(*tp);
+        producer->SendMessage(id, "tournament.created");
+        return id;
+    } catch (const domain::DuplicateEntryException& e) {
+        return std::unexpected(e.what());
+    }
 }
 
 std::expected<std::string, std::string> TournamentDelegate::UpdateTournament(std::shared_ptr<domain::Tournament> tournament)
 {
-    std::shared_ptr<domain::Tournament> tp = std::move(tournament);
-    std::string id = tournamentRepository->Update(*tp);
-    producer->SendMessage(id, "tournament.updated");
-    return id;
+    try {
+        std::shared_ptr<domain::Tournament> tp = std::move(tournament);
+        std::string id = tournamentRepository->Update(*tp);
+        producer->SendMessage(id, "tournament.updated");
+        return id;
+    } catch (const domain::NotFoundException& e) {
+        return std::unexpected(e.what());
+    } catch (const domain::DuplicateEntryException& e) {
+        return std::unexpected(e.what());
+    }
 }
 
 std::shared_ptr<domain::Tournament> TournamentDelegate::GetTournament(std::string_view id)

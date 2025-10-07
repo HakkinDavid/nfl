@@ -19,10 +19,15 @@ TournamentController::TournamentController(std::shared_ptr<ITournamentDelegate> 
 
 crow::response TournamentController::CreateTournament(const crow::request &request) const
 {
+    crow::response response;
+    if(!nlohmann::json::accept(request.body)) {
+        response.code = crow::BAD_REQUEST;
+        return response;
+    }
+    
     nlohmann::json body = nlohmann::json::parse(request.body);
     const std::shared_ptr<domain::Tournament> tournament = std::make_shared<domain::Tournament>(body);
 
-    crow::response response;
     auto createdIdResult = tournamentDelegate->CreateTournament(tournament);
     if (createdIdResult.has_value()) {
         response.code = crow::CREATED; // 201
@@ -42,10 +47,15 @@ crow::response TournamentController::CreateTournament(const crow::request &reque
 
 crow::response TournamentController::UpdateTournament(const crow::request &request) const
 {
+    crow::response response;
+    if(!nlohmann::json::accept(request.body)) {
+        response.code = crow::BAD_REQUEST;
+        return response;
+    }
+    
     nlohmann::json body = nlohmann::json::parse(request.body);
     const std::shared_ptr<domain::Tournament> tournament = std::make_shared<domain::Tournament>(body);
 
-    crow::response response;
     auto updateResult = tournamentDelegate->UpdateTournament(tournament);
     if (updateResult.has_value()) {
         response.code = crow::NO_CONTENT; // 204
