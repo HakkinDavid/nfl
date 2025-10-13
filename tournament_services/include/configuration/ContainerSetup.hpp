@@ -66,6 +66,10 @@ namespace config {
                 .singleInstance();
         builder.registerType<TournamentController>().singleInstance();
 
+        builder.registerType<QueueMessageProducer>()
+               .as<IQueueMessageProducer>()
+               .singleInstance();
+
         builder.registerType<GroupDelegate>().as<IGroupDelegate>().singleInstance();
         builder.registerType<GroupController>().singleInstance();
 

@@ -15,10 +15,10 @@
 class TournamentDelegate : public ITournamentDelegate
 {
     std::shared_ptr<IRepository<domain::Tournament, std::string>> tournamentRepository;
-    std::shared_ptr<QueueMessageProducer> producer;
+    std::shared_ptr<IQueueMessageProducer> producer;
 
 public:
-    explicit TournamentDelegate(std::shared_ptr<IRepository<domain::Tournament, std::string>> repository, std::shared_ptr<QueueMessageProducer> producer);
+    explicit TournamentDelegate(std::shared_ptr<IRepository<domain::Tournament, std::string>> repository, std::shared_ptr<IQueueMessageProducer> producer);
 
     std::expected<std::string, std::string> CreateTournament(std::shared_ptr<domain::Tournament> tournament) override;
     std::expected<std::string, std::string> UpdateTournament(std::shared_ptr<domain::Tournament> tournament) override;

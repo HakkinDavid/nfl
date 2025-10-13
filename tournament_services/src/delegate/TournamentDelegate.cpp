@@ -9,7 +9,7 @@
 #include "domain/Utilities.hpp"
 #include "persistence/repository/IRepository.hpp"
 
-TournamentDelegate::TournamentDelegate(std::shared_ptr<IRepository<domain::Tournament, std::string>> repository, std::shared_ptr<QueueMessageProducer> producer) : tournamentRepository(std::move(repository)), producer(std::move(producer))
+TournamentDelegate::TournamentDelegate(std::shared_ptr<IRepository<domain::Tournament, std::string>> repository, std::shared_ptr<IQueueMessageProducer> producer) : tournamentRepository(std::move(repository)), producer(std::move(producer))
 {
 }
 
@@ -49,7 +49,8 @@ std::expected<void, std::string> TournamentDelegate::DeleteTournament(const std:
     try
     {
         tournamentRepository->Delete(tournamentId);
-        producer->SendMessage(tournamentId, "tournament.deleted");
+        // Comentado por ahora para ver si laggeaba el API call
+        //producer->SendMessage(tournamentId, "tournament.deleted");
         return {};
     }
     catch (const domain::NotFoundException &e)

@@ -52,7 +52,6 @@ crow::response TournamentController::UpdateTournament(const crow::request &reque
         response.code = crow::BAD_REQUEST;
         return response;
     }
-    
     nlohmann::json body = nlohmann::json::parse(request.body);
     const std::shared_ptr<domain::Tournament> tournament = std::make_shared<domain::Tournament>(body);
 

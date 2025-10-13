@@ -47,10 +47,32 @@ std::string TournamentRepository::Create (const domain::Tournament & entity) {
 }
 
 std::string TournamentRepository::Update (const domain::Tournament & entity) {
-    return "id";
+    const nlohmann::json tournamentDoc = entity;
+    std::string id = entity.Id();
+
+    auto pooled = connectionProvider->Connection();
+    const auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
+
+    pqxx::work tx(*(connection->connection));
+
+    // Comando SQL raw for now
+    tx.exec(
+        "UPDATE tournaments SET document = " + tx.quote(tournamentDoc.dump()) +
+        " WHERE id = " + tx.quote(id)
+    );
+    tx.commit();
+
+    return id;
 }
 
 void TournamentRepository::Delete(std::string id) {
+    auto pooled = connectionProvider->Connection();
+    const auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
+
+    pqxx::work tx(*(connection->connection));
+    // Comando SQL raw for now
+    tx.exec("DELETE FROM tournaments WHERE id = " + tx.quote(id));
+    tx.commit();
 
 }
 
