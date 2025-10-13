@@ -1,92 +1,37 @@
 #ifndef SERVICE_GROUP_DELEGATE_HPP
 #define SERVICE_GROUP_DELEGATE_HPP
 
-#include <string>
-#include <string_view>
+#include "delegate/IGroupDelegate.hpp"
 #include <memory>
-#include <expected>
 
-#include "IGroupDelegate.hpp"
+class TournamentRepository;
+class IGroupRepository;
+class TeamRepository;
+class IQueueMessageProducer;
 
-class GroupDelegate : public IGroupDelegate{
+class GroupDelegate : public IGroupDelegate {
     std::shared_ptr<TournamentRepository> tournamentRepository;
     std::shared_ptr<IGroupRepository> groupRepository;
     std::shared_ptr<TeamRepository> teamRepository;
+    std::shared_ptr<IQueueMessageProducer> producer;
+
+    static constexpr int MAX_GROUPS_PER_TOURNAMENT = 8;
+    static constexpr int MAX_TEAMS_PER_GROUP = 4;
+
+    void checkAndPublishTournamentReadyEvent(std::string_view tournamentId);
 
 public:
-    inline GroupDelegate(const std::shared_ptr<TournamentRepository>& tournamentRepository, const std::shared_ptr<IGroupRepository>& groupRepository, const std::shared_ptr<TeamRepository>& teamRepository);
-    std::expected<std::string, std::string> CreateGroup(const std::string_view& tournamentId, const domain::Group& group) override;
-    std::expected<std::vector<std::shared_ptr<domain::Group>>, std::string> GetGroups(const std::string_view& tournamentId) override;
-    std::expected<std::shared_ptr<domain::Group>, std::string> GetGroup(const std::string_view& tournamentId, const std::string_view& groupId) override;
-    std::expected<void, std::string> UpdateGroup(const std::string_view& tournamentId, const domain::Group& group) override;
-    std::expected<void, std::string> RemoveGroup(const std::string_view& tournamentId, const std::string_view& groupId) override;
-    std::expected<void, std::string> UpdateTeams(const std::string_view& tournamentId, const std::string_view& groupId, const std::vector<domain::Team>& team) override;
+    GroupDelegate(std::shared_ptr<TournamentRepository> tournamentRepo,
+                  std::shared_ptr<IGroupRepository> groupRepo,
+                  std::shared_ptr<TeamRepository> teamRepo,
+                  std::shared_ptr<IQueueMessageProducer> producer);
+
+    std::expected<std::vector<domain::Group>, std::string> GetGroups(std::string tournamentId) override;
+    std::expected<domain::Group, std::string> GetGroup(std::string tournamentId, std::string_view groupId) override;
+    std::expected<std::string, std::string> CreateGroup(std::string tournamentId, domain::Group& group) override;
+    std::expected<void, std::string> AddTeamToGroup(std::string_view tournamentId, std::string_view groupId, const domain::Team& team) override;
+    std::expected<void, std::string> UpdateGroupName(std::string_view tournamentId, std::string_view groupId, const domain::Group& groupUpdatePayload) override;
+    std::expected<void, std::string> DeleteGroup(std::string_view tournamentId, std::string groupId) override;
 };
 
-GroupDelegate::GroupDelegate(const std::shared_ptr<TournamentRepository>& tournamentRepository, const std::shared_ptr<IGroupRepository>& groupRepository, const std::shared_ptr<TeamRepository>& teamRepository)
-    : tournamentRepository(tournamentRepository), groupRepository(groupRepository), teamRepository(teamRepository){}
-
-inline std::expected<std::string, std::string> GroupDelegate::CreateGroup(const std::string_view& tournamentId, const domain::Group& group) {
-    auto tournament = tournamentRepository->ReadById(tournamentId.data());
-    if (tournament == nullptr) {
-        return std::unexpected("Tournament doesn't exist");
-    }
-    domain::Group g = group;
-    g.TournamentId() = tournament->Id();
-    if (!g.Teams().empty()) {
-        for (auto& t : g.Teams()) {
-            auto team = teamRepository->ReadById(t.Id);
-            if (team == nullptr) {
-                return std::unexpected("Team doesn't exist");
-            }
-        }
-    }
-    auto id = groupRepository->Create(g);
-    return id;
-}
-
-inline std::expected<std::vector<std::shared_ptr<domain::Group>>, std::string> GroupDelegate::GetGroups(const std::string_view& tournamentId) {
-    try {
-        return this->groupRepository->FindByTournamentId(tournamentId);
-    } catch (const std::exception& e) {
-        return std::unexpected("Error when reading to DB");
-    }
-}
-inline std::expected<std::shared_ptr<domain::Group>, std::string> GroupDelegate::GetGroup(const std::string_view& tournamentId, const std::string_view& groupId) {
-    try {
-        return groupRepository->FindByTournamentIdAndGroupId(tournamentId, groupId);
-    } catch (const std::exception& e) {
-        return std::unexpected("Error when reading to DB");
-    }
-}
-inline std::expected<void, std::string> GroupDelegate::UpdateGroup(const std::string_view& tournamentId, const domain::Group& group) {
-    return std::unexpected("Not implemented");
-}
-inline std::expected<void, std::string> GroupDelegate::RemoveGroup(const std::string_view& tournamentId, const std::string_view& groupId) {
-    return std::unexpected("Not implemented");
-}
-
-std::expected<void, std::string> GroupDelegate::UpdateTeams(const std::string_view& tournamentId, const std::string_view& groupId, const std::vector<domain::Team>& teams) {
-    const auto group = groupRepository->FindByTournamentIdAndGroupId(tournamentId, groupId);
-    if (group == nullptr) {
-        return std::unexpected("Group doesn't exist");
-    }
-    if (group->Teams().size() + teams.size() >= 16) {
-        return std::unexpected("Group at max capacity");
-    }
-    for (const auto& team : teams) {
-        if (const auto groupTeams = groupRepository->FindByTournamentIdAndTeamId(tournamentId, team.Id)) {
-            return std::unexpected(std::format("Team {} already exist", team.Id));
-        }
-    }
-    for (const auto& team : teams) {
-        const auto persistedTeam = teamRepository->ReadById(team.Id);
-        if (persistedTeam == nullptr) {
-            return std::unexpected(std::format("Team {} doesn't exist", team.Id));
-        }
-        groupRepository->UpdateGroupAddTeam(groupId, persistedTeam);
-    }
-    return {};
-}
-
-#endif /* SERVICE_GROUP_DELEGATE_HPP */
+#endif // SERVICE_GROUP_DELEGATE_HPP

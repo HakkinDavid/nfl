@@ -6,7 +6,9 @@ set(SERVICES_SOURCES
         src/delegate/TournamentDelegate.cpp
         src/controller/TournamentController.cpp
         src/controller/TeamController.cpp
-        include/common/Constants.hpp)
+        include/common/Constants.hpp
+        src/delegate/GroupDelegate.cpp
+        src/controller/GroupController.cpp)
 
 include(CTest)
 enable_testing()
