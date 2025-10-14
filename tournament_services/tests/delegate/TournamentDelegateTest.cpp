@@ -16,7 +16,7 @@
 // Mock for TournamentRepository
 class TournamentRepositoryMock : public IRepository<domain::Tournament, std::string> {
 public:
-    MOCK_METHOD(std::shared_ptr<domain::Tournament>, ReadById, (std::string id), (override));
+    MOCK_METHOD((std::shared_ptr<domain::Tournament>), ReadById, (std::string id), (override));
     MOCK_METHOD(std::string, Create, (const domain::Tournament& entity), (override));
     MOCK_METHOD(std::string, Update, (const domain::Tournament& entity), (override));
     MOCK_METHOD(void, Delete, (std::string id), (override));
@@ -54,7 +54,7 @@ protected:
         queueProducerMock = std::make_shared<QueueMessageProducerMock>();
         tournamentDelegate = std::make_shared<TournamentDelegate>(tournamentRepositoryMock, queueProducerMock);
     }
-};*/":"
+};*/
 TEST_F(TournamentDelegateTest, CreateTournament_Success) {
     auto tournamentToCreate = std::make_shared<domain::Tournament>();
     tournamentToCreate->Name() = "New Tournament";
