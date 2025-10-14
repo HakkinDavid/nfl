@@ -8,6 +8,11 @@ set(TEST_SOURCES
         delegate/TeamDelegateTest.cpp
         ../src/delegate/TeamDelegate.cpp
         delegate/TournamentDelegateTest.cpp
+        delegate/GroupDelegateTest.cpp
+        ../src/delegate/TournamentDelegate.cpp
+        ../src/delegate/GroupDelegate.cpp
+        ../src/controller/GroupController.cpp
+        controller/GroupControllerTest.cpp
 )
 
 set(SOURCES ${TEST_SOURCES})

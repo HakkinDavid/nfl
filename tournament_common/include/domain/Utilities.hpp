@@ -116,14 +116,17 @@ namespace domain {
     }
 
     inline void from_json(const nlohmann::json& json, Group& group) {
-        if(json.contains("id")) {
-            group.Id() = json["id"].get<std::string>();
+        json.at("name").get_to(group.Name());
+
+        if (json.contains("id")) {
+            json.at("id").get_to(group.Id());
         }
-        if(json.contains("tournamentId")) {
-            group.TournamentId() = json["tournamentId"].get<std::string>();
+        if (json.contains("tournamentId")) {
+            json.at("tournamentId").get_to(group.TournamentId());
         }
-        json["name"].get_to(group.Name());
-        json["teams"].get_to(group.Teams());
+        if (json.contains("teams")) {
+            json.at("teams").get_to(group.Teams());
+        }
     }
 
     inline void to_json(nlohmann::json& json, const std::shared_ptr<Group>& group) {
