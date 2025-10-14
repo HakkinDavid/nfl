@@ -49,8 +49,7 @@ std::expected<void, std::string> TournamentDelegate::DeleteTournament(const std:
     try
     {
         tournamentRepository->Delete(tournamentId);
-        // Comentado por ahora para ver si laggeaba el API call
-        //producer->SendMessage(tournamentId, "tournament.deleted");
+        producer->SendMessage(tournamentId, "tournament.deleted");
         return {};
     }
     catch (const domain::NotFoundException &e)
