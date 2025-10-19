@@ -136,10 +136,10 @@ From what I understand, an object's Controller is in charge of handling the HTTP
 transforms the body into an actual instance of the object and sends it to the Delegate to be processed.
 It then either receives the expected response or catches an error, and from that craftes a reponse to
 the HTTP request with the correct response code.
-Meanwhile, the object's Delegate receives the object [QUALIFI STRUCUTRE] and sends it to the object's
-Repository to actually interact with the database. The Delegate expects a succesful operation in the 
-database. Depending on if this expectation is met or not, the Delegate returns the appropriate value,
-error, or message for the Controller to interpret.
+Meanwhile, the object's Delegate receives the object and sends it to the object's Repository to actually 
+interact with the database. The Delegate expects a succesful operation in the database. Depending on if 
+this expectation is met or not, the Delegate returns the appropriate value, error, or message for the 
+Controller to interpret.
 
 We have to implement the logic for handling several cases of request bodies sent to several URIs, and 
 for every such case we have to create a test that verifies a correct implementation. 

@@ -85,7 +85,7 @@ crow::response TournamentController::GetTournament(const std::string &tournament
     {
         nlohmann::json body = tournament;
         auto response = crow::response{crow::OK, body.dump()};
-        response.add_header("Content-Type", "application/json");
+        response.add_header(CONTENT_TYPE_HEADER, JSON_CONTENT_TYPE);
         return response;
     }
     return crow::response{crow::NOT_FOUND, "tournament not found"};
