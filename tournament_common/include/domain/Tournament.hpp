@@ -70,6 +70,7 @@ namespace domain
     public:
         explicit Tournament(const std::string &name = "", const TournamentFormat &format = TournamentFormat(8, 4, TournamentType::NFL))
         {
+            this->id = "";
             this->name = name;
             this->format = format;
         }

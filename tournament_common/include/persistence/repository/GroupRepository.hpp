@@ -26,6 +26,7 @@ public:
     std::shared_ptr<domain::Group> FindByTournamentIdAndGroupId(const std::string_view& tournamentId, const std::string_view& groupId) override;
     std::shared_ptr<domain::Group> FindByTournamentIdAndTeamId(const std::string_view& tournamentId, const std::string_view& teamId) override;
     void UpdateGroupAddTeam(std::string_view groupId, const domain::Team & team) override;
+    virtual ~GroupRepository() = default;
 };
 
 #endif //TOURNAMENTS_GROUPREPOSITORY_HPP

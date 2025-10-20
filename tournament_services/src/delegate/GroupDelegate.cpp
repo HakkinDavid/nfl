@@ -12,9 +12,9 @@
 #include <utility>
 #include <format>
 
-GroupDelegate::GroupDelegate(std::shared_ptr<TournamentRepository> tournamentRepo,
+GroupDelegate::GroupDelegate(std::shared_ptr<IRepository<domain::Tournament, std::string>> tournamentRepo,
                              std::shared_ptr<IGroupRepository> groupRepo,
-                             std::shared_ptr<TeamRepository> teamRepo,
+                             std::shared_ptr<IRepository<domain::Team, std::string>> teamRepo,
                              std::shared_ptr<IQueueMessageProducer> producer)
     : tournamentRepository(std::move(tournamentRepo)),
       groupRepository(std::move(groupRepo)),
@@ -50,8 +50,8 @@ std::expected<domain::Group, std::string> GroupDelegate::GetGroup(std::string to
     return *group;
 }
 
-std::expected<std::string, std::string> GroupDelegate::CreateGroup(std::string tournamentId, domain::Group& group) {
-    auto tournament = tournamentRepository->ReadById(tournamentId);
+std::expected<std::string, std::string> GroupDelegate::CreateGroup(const std::string tournamentId, domain::Group& group) {
+    std::shared_ptr<domain::Tournament> tournament = tournamentRepository->ReadById(tournamentId);
     if (!tournament) {
         return std::unexpected("Tournament not found.");
     }

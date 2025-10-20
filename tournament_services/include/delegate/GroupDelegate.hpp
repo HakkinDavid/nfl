@@ -2,17 +2,18 @@
 #define SERVICE_GROUP_DELEGATE_HPP
 
 #include "delegate/IGroupDelegate.hpp"
+#include "persistence/repository/IRepository.hpp"
+#include "domain/Tournament.hpp"
+#include "domain/Team.hpp"
 #include <memory>
 
-class TournamentRepository;
 class IGroupRepository;
-class TeamRepository;
 class IQueueMessageProducer;
 
 class GroupDelegate : public IGroupDelegate {
-    std::shared_ptr<TournamentRepository> tournamentRepository;
+    std::shared_ptr<IRepository<domain::Tournament, std::string>> tournamentRepository;
     std::shared_ptr<IGroupRepository> groupRepository;
-    std::shared_ptr<TeamRepository> teamRepository;
+    std::shared_ptr<IRepository<domain::Team, std::string>> teamRepository;
     std::shared_ptr<IQueueMessageProducer> producer;
 
     static constexpr int MAX_GROUPS_PER_TOURNAMENT = 8;
@@ -21,9 +22,9 @@ class GroupDelegate : public IGroupDelegate {
     void checkAndPublishTournamentReadyEvent(std::string_view tournamentId);
 
 public:
-    GroupDelegate(std::shared_ptr<TournamentRepository> tournamentRepo,
+    GroupDelegate(std::shared_ptr<IRepository<domain::Tournament, std::string>> tournamentRepo,
                   std::shared_ptr<IGroupRepository> groupRepo,
-                  std::shared_ptr<TeamRepository> teamRepo,
+                  std::shared_ptr<IRepository<domain::Team, std::string>> teamRepo,
                   std::shared_ptr<IQueueMessageProducer> producer);
 
     std::expected<std::vector<domain::Group>, std::string> GetGroups(std::string tournamentId) override;

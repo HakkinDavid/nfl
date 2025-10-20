@@ -110,6 +110,8 @@ public:
             throw domain::NotFoundException();
         }
     }
+
+    virtual ~TeamRepository() = default;
 };
 
 

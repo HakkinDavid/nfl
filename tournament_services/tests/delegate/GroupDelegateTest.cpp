@@ -10,7 +10,7 @@
 #include <string>
 
 #include "persistence/repository/TournamentRepository.hpp"
-#include "persistence/repository/IGroupRepository.hpp"
+#include "persistence/repository/GroupRepository.hpp"
 #include "persistence/repository/TeamRepository.hpp"
 #include "cms/IQueueMessageProducer.hpp"
 #include "domain/Tournament.hpp"
@@ -20,29 +20,35 @@
 #include "delegate/GroupDelegate.hpp"
 
 // Mocks para todas las dependencias del Delegate
-class TournamentRepositoryMock : public TournamentRepository {
+class TournamentRepositoryMock : public IRepository<domain::Tournament, std::string> {
 public:
-    TournamentRepositoryMock() : TournamentRepository(nullptr) {}
-    MOCK_METHOD(std::shared_ptr<domain::Tournament>, ReadById, (std::string id), (override));
+    MOCK_METHOD((std::shared_ptr<domain::Tournament>), ReadById, (std::string id), (override));
+    MOCK_METHOD(std::string, Create, (const domain::Tournament& entity), (override));
+    MOCK_METHOD(std::string, Update, (const domain::Tournament& entity), (override));
+    MOCK_METHOD(void, Delete, (std::string id), (override));
+    MOCK_METHOD(std::vector<std::shared_ptr<domain::Tournament>>, ReadAll, (), (override));
 };
 
 class GroupRepositoryMock : public IGroupRepository {
 public:
-    MOCK_METHOD(std::shared_ptr<domain::Group>, ReadById, (std::string id), (override));
+    MOCK_METHOD((std::shared_ptr<domain::Group>), ReadById, (std::string id), (override));
     MOCK_METHOD(std::string, Create, (const domain::Group& entity), (override));
     MOCK_METHOD(std::string, Update, (const domain::Group& entity), (override));
     MOCK_METHOD(void, Delete, (std::string id), (override));
-    MOCK_METHOD(std::vector<std::shared_ptr<domain::Group>>, ReadAll, (), (override));
-    MOCK_METHOD(std::vector<std::shared_ptr<domain::Group>>, FindByTournamentId, (const std::string_view& tournamentId), (override));
-    MOCK_METHOD(std::shared_ptr<domain::Group>, FindByTournamentIdAndGroupId, (const std::string_view& tournamentId, const std::string_view& groupId), (override));
-    MOCK_METHOD(std::shared_ptr<domain::Group>, FindByTournamentIdAndTeamId, (const std::string_view& tournamentId, const std::string_view& teamId), (override));
+    MOCK_METHOD((std::vector<std::shared_ptr<domain::Group>>), ReadAll, (), (override));
+    MOCK_METHOD((std::vector<std::shared_ptr<domain::Group>>), FindByTournamentId, (const std::string_view& tournamentId), (override));
+    MOCK_METHOD((std::shared_ptr<domain::Group>), FindByTournamentIdAndGroupId, (const std::string_view& tournamentId, const std::string_view& groupId), (override));
+    MOCK_METHOD((std::shared_ptr<domain::Group>), FindByTournamentIdAndTeamId, (const std::string_view& tournamentId, const std::string_view& teamId), (override));
     MOCK_METHOD(void, UpdateGroupAddTeam, (std::string_view groupId, const domain::Team& team), (override));
 };
 
-class TeamRepositoryMock : public TeamRepository {
+class TeamRepositoryMock : public IRepository<domain::Team, std::string> {
 public:
-    TeamRepositoryMock() : TeamRepository(nullptr) {}
     MOCK_METHOD(std::shared_ptr<domain::Team>, ReadById, (std::string id), (override));
+    MOCK_METHOD(std::string, Create, (const domain::Team& entity), (override));
+    MOCK_METHOD(std::string, Update, (const domain::Team& entity), (override));
+    MOCK_METHOD(void, Delete, (std::string id), (override));
+    MOCK_METHOD(std::vector<std::shared_ptr<domain::Team>>, ReadAll, (), (override));
 };
 
 class QueueMessageProducerMock : public IQueueMessageProducer {
@@ -81,16 +87,20 @@ TEST_F(GroupDelegateTest, CreateGroup_Success) {
     groupPayload.Name() = "Group A";
     const std::string newGroupId = "group-abc";
 
+    auto mockTournament = std::make_shared<domain::Tournament>();
+    mockTournament->Id() = tournamentId;
+    mockTournament->Name() = "Mock Tournament";
+
     EXPECT_CALL(*tournamentRepoMock, ReadById(tournamentId))
-        .WillOnce(testing::Return(std::make_shared<domain::Tournament>()));
+        .WillOnce(testing::Return(mockTournament));
     EXPECT_CALL(*groupRepoMock, FindByTournamentId(tournamentId))
-        .Times(2) // Una llamada extra por el evento
+        .Times(2)
         .WillRepeatedly(testing::Return(std::vector<std::shared_ptr<domain::Group>>{}));
     EXPECT_CALL(*groupRepoMock, Create(::testing::_))
         .WillOnce(testing::Return(newGroupId));
 
     auto result = groupDelegate->CreateGroup(tournamentId, groupPayload);
-    
+
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(newGroupId, result.value());
 }
