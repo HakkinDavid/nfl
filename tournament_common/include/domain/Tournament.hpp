@@ -7,42 +7,54 @@
 #include "domain/Group.hpp"
 #include "domain/Match.hpp"
 
-namespace domain {
-    enum class TournamentType {
-        ROUND_ROBIN, NFL
+namespace domain
+{
+    enum class TournamentType
+    {
+        ROUND_ROBIN,
+        NFL
     };
 
-    class TournamentFormat {
+    class TournamentFormat
+    {
         int numberOfGroups;
         int maxTeamsPerGroup;
         TournamentType type;
+
     public:
-        TournamentFormat(int numberOfGroups = 1, int maxTeamsPerGroup = 16, TournamentType tournamentType = TournamentType::ROUND_ROBIN) {
+        TournamentFormat(int numberOfGroups = 1, int maxTeamsPerGroup = 16, TournamentType tournamentType = TournamentType::ROUND_ROBIN)
+        {
             this->numberOfGroups = numberOfGroups;
             this->maxTeamsPerGroup = maxTeamsPerGroup;
             this->type = tournamentType;
         }
 
-        int NumberOfGroups() const {
+        int NumberOfGroups() const
+        {
             return this->numberOfGroups;
         }
-        int & NumberOfGroups() {
+        int &NumberOfGroups()
+        {
             return this->numberOfGroups;
         }
 
-        int MaxTeamsPerGroup() const {
+        int MaxTeamsPerGroup() const
+        {
             return this->maxTeamsPerGroup;
         }
 
-        int & MaxTeamsPerGroup() {
+        int &MaxTeamsPerGroup()
+        {
             return this->maxTeamsPerGroup;
         }
 
-        TournamentType Type() const {
+        TournamentType Type() const
+        {
             return this->type;
         }
 
-        TournamentType & Type() {
+        TournamentType &Type()
+        {
             return this->type;
         }
     };
@@ -56,41 +68,63 @@ namespace domain {
         std::vector<Match> matches;
 
     public:
-        explicit Tournament(const std::string &name = "", const TournamentFormat& format = TournamentFormat(8, 4, TournamentType::NFL)) {
+        explicit Tournament(const std::string &name = "", const TournamentFormat &format = TournamentFormat(8, 4, TournamentType::NFL))
+        {
             this->name = name;
             this->format = format;
         }
 
-        [[nodiscard]] std::string Id() const {
+        [[nodiscard]] std::string Id() const
+        {
             return this->id;
         }
 
-        std::string& Id() {
+        std::string &Id()
+        {
             return this->id;
         }
 
-        [[nodiscard]] std::string Name() const {
+        [[nodiscard]] std::string Name() const
+        {
             return this->name;
         }
 
-        std::string& Name() {
+        std::string &Name()
+        {
             return this->name;
         }
 
-        [[nodiscard]] TournamentFormat Format() const {
+        [[nodiscard]] TournamentFormat Format() const
+        {
             return this->format;
         }
 
-        TournamentFormat & Format () {
+        TournamentFormat &Format()
+        {
             return this->format;
         }
 
-        [[nodiscard]] std::vector<Group> & Groups() {
+        [[nodiscard]] std::vector<Group> &Groups()
+        {
             return this->groups;
         }
 
-        [[nodiscard]] std::vector<Match> Matches() const {
+        [[nodiscard]] std::vector<Match> Matches() const
+        {
             return this->matches;
+        }
+
+        Tournament &operator=(const std::shared_ptr<Tournament> &other)
+        {
+            if (other)
+            {
+                *this = *other;
+            }
+            else
+            {
+                *this = Tournament{};
+            }
+            return *this;
         }
     };
 }
