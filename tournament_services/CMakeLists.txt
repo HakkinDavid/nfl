@@ -8,7 +8,10 @@ set(SERVICES_SOURCES
         src/controller/TeamController.cpp
         include/common/Constants.hpp
         src/delegate/GroupDelegate.cpp
-        src/controller/GroupController.cpp)
+        src/controller/GroupController.cpp
+        include/delegate/IMatchDelegate.hpp
+        src/delegate/MatchDelegate.cpp
+        src/controller/MatchController.cpp)
 
 include(CTest)
 enable_testing()

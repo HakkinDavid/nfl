@@ -54,6 +54,22 @@ public:
                     last_update_date = CURRENT_TIMESTAMP
                 where id = $1
             )");
+            connectionPool.back()->prepare("create_match", "INSERT INTO matches (tournament_id, document) VALUES ($1, $2) RETURNING id");
+            connectionPool.back()->prepare("get_matches_by_tournament", "SELECT id, document FROM matches WHERE tournament_id = $1");
+            connectionPool.back()->prepare("get_match_by_id_and_tournament", "SELECT id, document FROM matches WHERE id = $1 AND tournament_id = $2");
+            connectionPool.back()->prepare("update_match_score", "UPDATE matches SET document = jsonb_set(document, '{score}', $1::jsonb) WHERE id = $2 AND tournament_id = $3 RETURNING id");
+            connectionPool.back()->prepare("get_matches_by_round", "SELECT id, document FROM matches WHERE tournament_id = $1 AND document ->> 'round' = $2");
+            connectionPool.back()->prepare("find_last_open_match", R"(
+                SELECT id, document FROM matches
+                WHERE tournament_id = $1
+                AND document -> 'score' IS NULL
+                AND (
+                     (document -> 'home'    ->> 'id' = '')
+                     OR
+                     (document -> 'visitor' ->> 'id' = '')
+                )
+                LIMIT 1
+            )");
         }
     }
 

@@ -166,4 +166,45 @@ namespace domain {
     }
 }
 
-#endif /* FC7CD637_41CC_48DE_8D8A_BC2CFC528D72 */
+namespace nlohmann {
+    template <>
+    struct adl_serializer<domain::Score> {
+        static void to_json(json& j, const domain::Score& s) {
+            j = json{{"home", s.homeTeamScore}, {"visitor", s.visitorTeamScore}};
+        }
+        static void from_json(const json& j, domain::Score& s) {
+            j.at("home").get_to(s.homeTeamScore);
+            j.at("visitor").get_to(s.visitorTeamScore);
+        }
+    };
+
+    template <>
+    struct adl_serializer<domain::Match> {
+        static void to_json(json& j, const domain::Match& m) {
+            j["id"] = m.Id();
+            j["home"] = m.Home();
+            j["visitor"] = m.Visitor();
+            j["round"] = m.Round();
+
+            if (m.Score().has_value()) {
+                j["score"] = m.Score().value();
+            }
+        }
+
+        static void from_json(const json& j, domain::Match& m) {
+            j.at("home").get_to(m.Home());
+            j.at("visitor").get_to(m.Visitor());
+            j.at("round").get_to(m.Round());
+
+            if (j.contains("score")) {
+                domain::Score temp_score;
+                j.at("score").get_to(temp_score);
+                m.Score() = temp_score;
+            } else {
+                m.Score() = std::nullopt;
+            }
+        }
+    };
+}
+
+#endif

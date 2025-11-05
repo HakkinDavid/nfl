@@ -2,11 +2,17 @@
 #define DOMAIN_MATCH_HPP
 
 #include <string>
+#include <optional>
+#include <vector>
+#include "domain/Team.hpp"
+
 namespace domain {
-    enum class Winner { HOME, VISITOR  };
+    enum class Winner { HOME, VISITOR };
+
     struct Score {
         int homeTeamScore;
         int visitorTeamScore;
+
         [[nodiscard]] Winner GetWinner() const {
             if (visitorTeamScore < homeTeamScore) {
                 return Winner::HOME;
@@ -14,40 +20,35 @@ namespace domain {
             return Winner::VISITOR;
         }
     };
-    class Match {
-        /* data */
-        std::string homeTeamId;
-        std::string visitorTeamId;
-        Score score;
 
-        //winner's next match
-        //loser's next match
+    class Match {
+        std::string id;
+        std::string tournamentId;
+        Team home;
+        Team visitor;
+        std::string round;
+        std::optional<domain::Score> score;
 
     public:
-        Match(/* args */){}
-        [[nodiscard]] std::string HomeTeamId() const {
-            return homeTeamId;
-        }
-        std::string & HomeTeamId() {
-            return homeTeamId;
-        }
+        // Getters y Setters
+        [[nodiscard]] std::string Id() const { return id; }
+        std::string& Id() { return id; }
 
-        [[nodiscard]] std::string VisitorTeamId() const {
-            return visitorTeamId;
-        }
+        [[nodiscard]] std::string TournamentId() const { return tournamentId; }
+        std::string& TournamentId() { return tournamentId; }
 
-        std::string & VisitorTeamId() {
-            return visitorTeamId;
-        }
+        [[nodiscard]] Team Home() const { return home; }
+        Team& Home() { return home; }
 
-        Score & MatchScore() {
-            return score;
-        }
+        [[nodiscard]] Team Visitor() const { return visitor; }
+        Team& Visitor() { return visitor; }
 
-        [[nodiscard]] Score MatchScore() const {
-            return score;
-        }
+        [[nodiscard]] std::string Round() const { return round; }
+        std::string& Round() { return round; }
+
+        [[nodiscard]] std::optional<domain::Score> Score() const { return score; }
+        std::optional<domain::Score>& Score() { return score; }
     };
-    
 }
+
 #endif

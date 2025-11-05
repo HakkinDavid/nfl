@@ -13,6 +13,10 @@ set(TEST_SOURCES
         ../src/delegate/GroupDelegate.cpp
         ../src/controller/GroupController.cpp
         controller/GroupControllerTest.cpp
+        delegate/MatchDelegateTest.cpp
+        ../src/delegate/MatchDelegate.cpp
+        ../src/controller/MatchController.cpp
+        controller/MatchControllerTest.cpp
 )
 
 set(SOURCES ${TEST_SOURCES})

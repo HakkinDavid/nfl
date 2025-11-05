@@ -9,7 +9,6 @@
 #include <expected>
 #include <string>
 
-#include "persistence/repository/TournamentRepository.hpp"
 #include "persistence/repository/GroupRepository.hpp"
 #include "persistence/repository/TeamRepository.hpp"
 #include "cms/IQueueMessageProducer.hpp"

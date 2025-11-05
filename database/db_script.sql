@@ -52,12 +52,20 @@ CREATE TABLE GROUPS (
 CREATE UNIQUE INDEX tournament_group_unique_name_idx ON GROUPS (tournament_id,(document->>'name'));
 
 DROP TABLE IF EXISTS MATCHES CASCADE;
-CREATE TABLE MATCHES (
+CREATE TABLE matches (
                          id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+                         tournament_id UUID NOT NULL,
                          document JSONB NOT NULL,
                          last_update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                         CONSTRAINT fk_tournament
+                             FOREIGN KEY(tournament_id)
+                                 REFERENCES tournaments(id)
+                                 ON DELETE CASCADE
 );
+
+CREATE INDEX idx_matches_tournament_id ON matches(tournament_id);
 
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO tournament_svc;
 GRANT DELETE ON ALL TABLES IN SCHEMA public TO tournament_svc;
