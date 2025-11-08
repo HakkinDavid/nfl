@@ -19,25 +19,28 @@
 #include "persistence/repository/TournamentRepository.hpp"
 #include "../cms/QueueMessageListener.hpp"
 #include "cms/GroupAddTeamListener.hpp"
+#include "cms/MatchCreatedListener.hpp"
 
 namespace config {
+    nlohmann::json configuration;
+    
     inline std::shared_ptr<Hypodermic::Container> containerSetup() {
         Hypodermic::ContainerBuilder builder;
 
         std::ifstream file("configuration.json");
-        nlohmann::json configuration;
         file >> configuration;
 
         std::shared_ptr<PostgresConnectionProvider> postgressConnection = std::make_shared<PostgresConnectionProvider>(configuration["databaseConfig"]["connectionString"].get<std::string>(), configuration["databaseConfig"]["poolSize"].get<size_t>());
         builder.registerInstance(postgressConnection).as<IDbConnectionProvider>();
 
         builder.registerType<ConnectionManager>()
-            .onActivated([configuration](Hypodermic::ComponentContext& context, const std::shared_ptr<ConnectionManager>& instance) {
+            .onActivated([](Hypodermic::ComponentContext& context, const std::shared_ptr<ConnectionManager>& instance) {
                 instance->initialize(configuration["activemq"]["broker-url"].get<std::string>());
             })
             .singleInstance();
 
         builder.registerType<GroupAddTeamListener>();
+        builder.registerType<MatchCreatedListener>();
 
         builder.registerType<TeamRepository>().as<IRepository<domain::Team, std::string>>().singleInstance();
 

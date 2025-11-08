@@ -17,9 +17,14 @@ int main() {
             auto listener = container->resolve<GroupAddTeamListener>();
             listener->Start("tournament.team-add");
         });
+        std::thread matchCreatedThread([&] {
+            auto listener = container->resolve<MatchCreatedListener>();
+            listener->Start("match.created");
+        });
         //crear otro thread aqui
 
         tournamentCreatedThread.join();
+        matchCreatedThread.join();
         //join de otro thread aqui
         // while (true) {
         //     std::this_thread::sleep_for(std::chrono::seconds(5));
