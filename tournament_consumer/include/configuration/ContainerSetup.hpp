@@ -18,7 +18,7 @@
 #include "persistence/configuration/PostgresConnectionProvider.hpp"
 #include "persistence/repository/TournamentRepository.hpp"
 #include "../cms/QueueMessageListener.hpp"
-#include "cms/GroupAddTeamListener.hpp"
+#include "cms/TournamentReadyListener.hpp"
 #include "cms/MatchCreatedListener.hpp"
 
 namespace config {
@@ -39,7 +39,7 @@ namespace config {
             })
             .singleInstance();
 
-        builder.registerType<GroupAddTeamListener>();
+        builder.registerType<TournamentReadyListener>();
         builder.registerType<MatchCreatedListener>();
 
         builder.registerType<TeamRepository>().as<IRepository<domain::Team, std::string>>().singleInstance();

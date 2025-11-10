@@ -14,8 +14,8 @@ int main() {
         std::println("after container");
 
         std::thread tournamentCreatedThread([&] {
-            auto listener = container->resolve<GroupAddTeamListener>();
-            listener->Start("tournament.team-add");
+            auto listener = container->resolve<TournamentReadyListener>();
+            listener->Start("tournament.ready");
         });
         std::thread matchCreatedThread([&] {
             auto listener = container->resolve<MatchCreatedListener>();

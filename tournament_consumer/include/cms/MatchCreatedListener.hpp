@@ -17,9 +17,9 @@ public:
 
 inline void MatchCreatedListener::processMessage(const std::string& message) {
     try {
-        auto j = nlohmann::json::parse(message);
-        std::string tournamentId = j.at("tournament_id");
-        std::string matchId = j.at("match_id");
+        auto json = nlohmann::json::parse(message);
+        std::string tournamentId = json.at("tournament_id");
+        std::string matchId = json.at("match_id");
 
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -31,6 +31,7 @@ inline void MatchCreatedListener::processMessage(const std::string& message) {
             {"score", {{"home", score1}, {"visitor", score2}}}
         };
 
+        // Instead of sending PATCH request, use a MatchDelegate directly
         web::http::client::http_client client(U(config::configuration["endpoint"]["url"]));
         web::http::uri_builder builder;
         builder.append_path("tournaments");
@@ -45,6 +46,8 @@ inline void MatchCreatedListener::processMessage(const std::string& message) {
         auto response = client.request(req).get();
         std::println("PATCH to {} returned {}", builder.to_string(), response.status_code());
 
+        // At the end, it should check if all 160 matches have been created
+        // To either send a message or directly call a function to generate the playoffs
     } catch (const std::exception& e) {
         std::println("MatchCreatedListener error: {}", e.what());
     }
