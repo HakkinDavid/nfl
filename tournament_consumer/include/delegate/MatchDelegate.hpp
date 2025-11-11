@@ -1,10 +1,11 @@
 //
-// Created by developer on 10/13/25.
+// Created by Meeeeee on 11/10/25.
 //
 
 #ifndef CONSUMER_MATCHDELEGATE_HPP
 #define CONSUMER_MATCHDELEGATE_HPP
 
+#include <expected>
 #include <memory>
 
 #include "persistence/repository/IMatchRepository.hpp"
@@ -17,51 +18,121 @@ public:
     MatchDelegate(const std::shared_ptr<IMatchRepository>& matchRepository,
                   const std::shared_ptr<IGroupRepository>& groupRepository) 
         : groupRepository(groupRepository), matchRepository(matchRepository) {}
-    void CreateMatch(const domain::Match& match);
-    void CreateFirstRoundMatches(const std::string& tournamentId);
+
+    void createMatch(const domain::Match& match);
+    bool checkPrevRound(const std::string& tournamentId, const std::string& round);
+    std::expected<void, std::string> generateNextRound(const std::string& matchId, const std::string& tournamentId);
+
+    std::expected<void, std::string> createFirstRoundMatches(const std::string& tournamentId);
+    void createWildCardMatches(const std::string& tournamentId);
+    void createGroupMatches(const std::string& tournamentId);
+    void createConferenceMatches(const std::string& tournamentId);
+    void createFinalMatch(const std::string& tournamentId);
 };
 
-inline void MatchDelegate::CreateMatch(const domain::Match& match) {
-    // idk just call the dang repository and tell it to do the thingy
-    // and i guess send the match.created message here
-    
+inline void MatchDelegate::createMatch(const domain::Match& match) {
     std::string tournamentId = match.TournamentId();
-    std::string matchId = matchRepo->Create(match);
-    
-    //std::string eventMessage = std::format("{{\"matchId\": \"{}\", \"tournamentId\": \"{}\"}}", matchId, tournamentId);
-    //producer->SendMessage(eventMessage, "match.created");
+    std::string matchId = matchRepository->Create(match);
 }
 
-inline void MatchDelegate::CreateFirstRoundMatches(const std::string& tournamentId) {
-    auto groups = groupRepository->FindByTournamentId(tournamentId);
+inline std::expected<void, std::string> MatchDelegate::createFirstRoundMatches(const std::string& tournamentId) {
+    try {
+        auto groups = groupRepository->FindByTournamentId(tournamentId);
 
-    for (int g1=0; g1 < 7; ++g1) {
-        for (int g2=g1+1; g2 < 8; ++g2) {
-            for (int t=0; t < 4; ++t) {
-                domain::Match newMatch;
-                newMatch.TournamentId() = tournamentId;
-                newMatch.Home() = groups[g1]->Teams()[t];
-                newMatch.Visitor() = groups[g2]->Teams()[t];
-                newMatch.Round() = "First Round";
+        for (int g1=0; g1 < 7; ++g1) {
+            for (int g2=g1+1; g2 < 8; ++g2) {
+                for (int t=0; t < 4; ++t) {
+                    domain::Match newMatch;
+                    newMatch.TournamentId() = tournamentId;
+                    newMatch.Home() = groups[g1]->Teams()[t];
+                    newMatch.Visitor() = groups[g2]->Teams()[t];
+                    newMatch.Round() = "First Round";
 
-                CreateMatch(newMatch);
+                    CreateMatch(newMatch);
+                }
+            }
+        }
+
+        for (const auto& group : groups) {
+            for(int t1=0; t1 < 3; ++t1) {
+                for(int t2=t1+1; t2 < 4; ++t2) {
+                    domain::Match newMatch;
+                    newMatch.TournamentId() = tournamentId;
+                    newMatch.Home() = group->Teams()[t1];
+                    newMatch.Visitor() = group->Teams()[t2];
+                    newMatch.Round() = "First Round";
+
+                    CreateMatch(newMatch);
+                }
+            }
+        }
+
+        return {};
+    } catch (const std::exception& e) {
+        return std::unexpected(e.what());
+    }
+}
+
+inline bool MatchDelegate::checkPrevRound(const std::string& tournamentId, const std::string& round) {
+    bool roundDone = true;
+    
+    int totalMatches = 0;
+    switch (round) {
+        case "First Round": totalMatches = 160; break;
+        case "Wild Card": totalMatches = 6; break;
+        case "Group": totalMatches = 4; break;
+        case "Conference": totalMatches = 2; break;
+        default: roundDone = false;
+    }
+    
+    auto matches = matchRepository->FindMatchesByTournamentAndRound(tournamentId, round);
+    if (matches.size() != totalMatches) roundDone = false;
+    else {
+        for (auto &m : matches) {
+            if (!m->Score().has_value()) { 
+                roundDone = false;
+                break;
             }
         }
     }
+    
+    return roundDone;
+}
 
-    for (const auto& group : groups) {
-        for(int t1=0; t1 < 3; ++t1) {
-            for(int t2=t1+1; t2 < 4; ++t2) {
-                domain::Match newMatch;
-                newMatch.TournamentId() = tournamentId;
-                newMatch.Home() = group->Teams()[t1];
-                newMatch.Visitor() = group->Teams()[t2];
-                newMatch.Round() = "First Round";
-
-                CreateMatch(newMatch);
+inline std::expected<void, std::string> MatchDelegate::generateNextRound(const std::string& matchId, const std::string& tournamentId) {
+    try {
+        auto match = matchRepository->FindByIdAndTournamentId(matchId, tournamentId);
+        
+        std::string prevRound = match->Round();
+        if (prevRound == "Finals") return;
+        
+        bool roundDone = checkPrevRound(tournamentId, prevRound);
+        if (roundDone) {
+            switch (prevRound) {
+                case "First Round": createWildCardMatches(tournamentId); break;
+                case "Wild Card": createGroupMatches(tournamentId); break;
+                case "Group": createConferenceMatches(tournamentId); break;
+                case "Conference": createFinalMatch(tournamentId); break;
             }
         }
+        
+        return {};
+    } catch (const std::exception& e) {
+        return std::unexpected(e.what());
     }
+}
+
+inline void createWildCardMatches(const std::string& tournamentId) {
+
+}
+inline void createGroupMatches(const std::string& tournamentId) {
+
+}
+inline void createConferenceMatches(const std::string& tournamentId) {
+
+}
+inline void createFinalMatch(const std::string& tournamentId){
+
 }
 
 #endif //CONSUMER_MATCHDELEGATE_HPP

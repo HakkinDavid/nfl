@@ -19,7 +19,7 @@
 #include "persistence/repository/TournamentRepository.hpp"
 #include "../cms/QueueMessageListener.hpp"
 #include "cms/TournamentReadyListener.hpp"
-#include "cms/MatchCreatedListener.hpp"
+#include "cms/MatchScoreUpdatedListener.hpp"
 
 namespace config {
     nlohmann::json configuration;
@@ -40,7 +40,7 @@ namespace config {
             .singleInstance();
 
         builder.registerType<TournamentReadyListener>();
-        builder.registerType<MatchCreatedListener>();
+        builder.registerType<MatchScoreUpdatedListener>();
 
         builder.registerType<TeamRepository>().as<IRepository<domain::Team, std::string>>().singleInstance();
 

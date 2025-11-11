@@ -12,27 +12,21 @@ class TournamentReadyListener : public QueueMessageListener{
 
     void processMessage(const std::string& message) override;
 public:
-    TournamentReadyListener(const std::shared_ptr<ConnectionManager> &connectionManager);
-    ~TournamentReadyListener() override;
-
+    TournamentReadyListener(const std::shared_ptr<ConnectionManager>& connectionManager,
+                            const std::shared_ptr<MatchDelegate>& matchDelegate) 
+        : QueueMessageListener(connectionManager),
+          matchDelegate(matchDelegate) {}
+    ~TournamentReadyListener() override { Stop(); }
 };
 
-inline TournamentReadyListener::TournamentReadyListener(const std::shared_ptr<ConnectionManager> &connectionManager)
-    : QueueMessageListener(connectionManager) {
-}
-
-inline TournamentReadyListener::~TournamentReadyListener() {
-    Stop();
-}
-
 inline void TournamentReadyListener::processMessage(const std::string &message) {
-    try {
-        auto json = nlohmann::json::parse(message);
-        std::string tournamentId = json.at("tournament_id");
+    auto json = nlohmann::json::parse(message);
+    std::string tournamentId = json.at("tournament_id");
 
-        matchDelegate->CreateFirstRoundMatches(tournamentId);
-    } catch (const std::exception& e) {
-        std::println("TournamentReadyListener error: {}", e.what());
+    auto result = matchDelegate->createFirstRoundMatches(tournamentId);
+    
+    if (!result.has_value()) {
+        std::println("TournamentReadyListener error: {}", result.error());
     }
 }
 
