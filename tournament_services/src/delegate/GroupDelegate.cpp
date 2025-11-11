@@ -75,9 +75,13 @@ std::expected<std::string, std::string> GroupDelegate::CreateGroup(const std::st
     }
 
     group.TournamentId() = tournamentId;
-    std::string newGroupId = groupRepository->Create(group);
-    checkAndPublishTournamentReadyEvent(tournamentId);
-    return newGroupId;
+    try {
+        std::string newGroupId = groupRepository->Create(group);
+        checkAndPublishTournamentReadyEvent(tournamentId);
+        return newGroupId;
+    } catch (const domain::DuplicateEntryException& e) {
+        return std::unexpected(e.what());
+    }
 }
 
 std::expected<void, std::string> GroupDelegate::AddTeamToGroup(std::string_view tournamentId, std::string_view groupId, const domain::Team& team) {
