@@ -48,7 +48,7 @@ inline std::expected<void, std::string> MatchDelegate::createFirstRoundMatches(c
                     newMatch.Visitor() = groups[g2]->Teams()[t];
                     newMatch.Round() = "First Round";
 
-                    CreateMatch(newMatch);
+                    createMatch(newMatch);
                 }
             }
         }
@@ -62,7 +62,7 @@ inline std::expected<void, std::string> MatchDelegate::createFirstRoundMatches(c
                     newMatch.Visitor() = group->Teams()[t2];
                     newMatch.Round() = "First Round";
 
-                    CreateMatch(newMatch);
+                    createMatch(newMatch);
                 }
             }
         }
@@ -77,13 +77,13 @@ inline bool MatchDelegate::checkPrevRound(const std::string& tournamentId, const
     bool roundDone = true;
     
     int totalMatches = 0;
-    switch (round) {
-        case "First Round": totalMatches = 160; break;
-        case "Wild Card": totalMatches = 6; break;
-        case "Group": totalMatches = 4; break;
-        case "Conference": totalMatches = 2; break;
-        default: roundDone = false;
-    }
+
+    if ( round == "First Round") {
+        totalMatches = 160;
+    } else if (round == "Wild Card") { totalMatches = 6;}
+    else if (round == "Group") { totalMatches = 4;}
+    else if (round == "Conference") { totalMatches = 2;}
+    else roundDone = false;
     
     auto matches = matchRepository->FindMatchesByTournamentAndRound(tournamentId, round);
     if (matches.size() != totalMatches) roundDone = false;
@@ -104,16 +104,14 @@ inline std::expected<void, std::string> MatchDelegate::generateNextRound(const s
         auto match = matchRepository->FindByIdAndTournamentId(matchId, tournamentId);
         
         std::string prevRound = match->Round();
-        if (prevRound == "Finals") return;
+        if (prevRound == "Finals") return {};
         
         bool roundDone = checkPrevRound(tournamentId, prevRound);
         if (roundDone) {
-            switch (prevRound) {
-                case "First Round": createWildCardMatches(tournamentId); break;
-                case "Wild Card": createGroupMatches(tournamentId); break;
-                case "Group": createConferenceMatches(tournamentId); break;
-                case "Conference": createFinalMatch(tournamentId); break;
-            }
+            if (prevRound == "First Round") {createWildCardMatches(tournamentId);}
+            else if (prevRound == "Wild Card") {createGroupMatches(tournamentId);}
+            else if (prevRound == "Group") {createConferenceMatches(tournamentId);}
+            else if (prevRound == "Conference") {createFinalMatch(tournamentId);}
         }
         
         return {};
