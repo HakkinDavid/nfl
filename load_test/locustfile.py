@@ -8,7 +8,7 @@ import time
 class TournamentUser(HttpUser):
 
     def create_teams(self):
-        team_ids = list()
+        teams_created = list()
         for i in range(32):
             team_data = {
                 "name": f"Team {uuid.uuid4()}"
@@ -21,10 +21,14 @@ class TournamentUser(HttpUser):
             ) as response:
                 if response.status_code == 200 or response.status_code == 201:
                     location = response.headers.get("Location") or response.headers.get("location")
-                    team_ids.append(location)
+
+                    teams_created.append({
+                        "id": location,
+                        "name": team_data["name"]
+                    })
                 else:
                     response.failure(f"falló crear el equipo: {response.status_code}")
-        return team_ids
+        return teams_created
 
     def create_tournament(self):
         tournament_data = {
@@ -58,16 +62,21 @@ class TournamentUser(HttpUser):
                 response.failure(f"falló crear el grupo: {response.status_code}")
                 return None
 
-    def assign_teams_to_group(self, tournament_id: Any, group_id: Any, team_ids: list):
-        team_data = [{"id": f"{team_id}"} for team_id in team_ids]
-        with self.client.post(
-                f"/tournaments/{tournament_id}/groups/{group_id}/teams",
-                json=team_data,
-                catch_response=True,
-                name=f"POST /tournaments/{tournament_id}/groups/{group_id}/teams"
-        ) as response:
-            if response.status_code != 200 and response.status_code != 201:
-                response.failure(f"falló asignar equipos al grupo: {response.status_code}")
+    def assign_teams_to_group(self, tournament_id: Any, group_id: Any, team_list: list):
+        for team in teams_list:
+            team_data = {
+                "id": team["id"],
+                "name": team["name"]
+            }
+
+            with self.client.post(
+                    f"/tournaments/{tournament_id}/groups/{group_id}/teams",
+                    json=team_data, # Ahora el JSON es {"id": "...", "name": "..."}
+                    catch_response=True,
+                    name=f"POST /tournaments/{tournament_id}/groups/{group_id}/teams"
+            ) as response:
+                if response.status_code not in [200, 201, 204]:
+                    response.failure(f"falló asignar equipo {team['id']} al grupo: {response.status_code}")
 
     def fetch_pending_matches(self, tournament_id: Any):
         with self.client.get(
@@ -118,8 +127,8 @@ class TournamentUser(HttpUser):
         tournament_id = self.create_tournament()
         if not tournament_id:
             return
-        team_ids = self.create_teams()
-        if len(team_ids) < 32:
+        created_teams = self.create_teams()
+        if len(created_teams) < 32:
             return
         group_ids = []
         for _ in range(8):
@@ -130,7 +139,7 @@ class TournamentUser(HttpUser):
             return
         # asigna 4 equipos a cada grupo
         for i, group_id in enumerate(group_ids):
-            teams_for_group = team_ids[i*4:(i+1)*4]
+            teams_for_group = created_teams[i*4:(i+1)*4]
             self.assign_teams_to_group(tournament_id, group_id, teams_for_group)
         # simula las rondas
         rounds = [
