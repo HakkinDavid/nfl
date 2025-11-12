@@ -1,6 +1,22 @@
 project(tournament_tests)
 
 set(TEST_SOURCES
+        controller/TeamControllerTest.cpp
+        controller/TournamentControllerTest.cpp
+        ../src/controller/TeamController.cpp
+        ../src/controller/TournamentController.cpp
+        delegate/TeamDelegateTest.cpp
+        ../src/delegate/TeamDelegate.cpp
+        delegate/TournamentDelegateTest.cpp
+        delegate/GroupDelegateTest.cpp
+        ../src/delegate/TournamentDelegate.cpp
+        ../src/delegate/GroupDelegate.cpp
+        ../src/controller/GroupController.cpp
+        controller/GroupControllerTest.cpp
+        delegate/MatchDelegateTest.cpp
+        ../src/delegate/MatchDelegate.cpp
+        ../src/controller/MatchController.cpp
+        controller/MatchControllerTest.cpp
         ../../tournament_consumer/tests/MatchDelegateTest.cpp
 )
 
