@@ -21,7 +21,6 @@ public:
     std::expected<domain::Match, std::string> GetMatch(std::string_view tournamentId, std::string_view matchId) override;
     std::expected<void, std::string> UpdateMatchScore(std::string_view tournamentId, std::string_view matchId, const domain::Score& score) override;
     std::expected<std::string, std::string> CreateMatch(domain::Match& match) override;
-    std::expected<domain::Match, std::string> GetNextOpenMatch(std::string_view tournamentId) override;
     std::expected<std::vector<domain::Match>, std::string> GetMatchesByRound(std::string_view tournamentId, std::string_view round) override;
 };
 

@@ -77,24 +77,24 @@ std::string MatchRepository::UpdateScore(std::string_view matchId, std::string_v
     return res[0]["id"].as<std::string>();
 }
 
-std::shared_ptr<domain::Match> MatchRepository::FindLastOpenMatch(std::string_view tournamentId) {
+std::vector<std::shared_ptr<domain::Match>> MatchRepository::GetMatchesByTeamId(std::string_view tournamentId, std::string_view teamId) {
     auto pooled = connectionProvider->Connection();
     auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
     pqxx::work tx(*(connection->connection));
 
-    pqxx::result res = tx.exec(pqxx::prepped{"find_last_open_match"}, pqxx::params{tournamentId});
+    pqxx::result res = tx.exec(pqxx::prepped{"get_matches_by_teamid"}, pqxx::params{tournamentId, teamId});
     tx.commit();
 
-    if (res.empty()) {
-        return nullptr; // No se encontró ningún partido abierto
+    std::vector<std::shared_ptr<domain::Match>> matches;
+    for (auto row : res) {
+        auto jsonDocument = nlohmann::json::parse(row["document"].as<std::string>());
+        auto match = std::make_shared<domain::Match>();
+        jsonDocument.get_to(*match);
+        match->Id() = row["id"].as<std::string>();
+        matches.push_back(match);
     }
 
-    auto jsonDocument = nlohmann::json::parse(res[0]["document"].as<std::string>());
-    auto match = std::make_shared<domain::Match>();
-    jsonDocument.get_to(*match);
-    match->Id() = res[0]["id"].as<std::string>();
-
-    return match;
+    return matches;
 }
 
 std::vector<std::shared_ptr<domain::Match>> MatchRepository::FindMatchesByTournamentAndRound(std::string_view tournamentId, std::string_view round) {
