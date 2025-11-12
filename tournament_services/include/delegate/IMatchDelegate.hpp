@@ -23,7 +23,6 @@ public:
 
     // Para uso interno
     virtual std::expected<std::string, std::string> CreateMatch(domain::Match& match) = 0;
-    virtual std::expected<domain::Match, std::string> GetNextOpenMatch(std::string_view tournamentId) = 0;
     virtual std::expected<std::vector<domain::Match>, std::string> GetMatchesByRound(std::string_view tournamentId, std::string_view round) = 0;
 };
 

@@ -31,7 +31,7 @@ public:
     MOCK_METHOD((std::vector<std::shared_ptr<domain::Match>>), ReadAll, (), (override));
 
     // Métodos de IMatchRepository
-    MOCK_METHOD((std::shared_ptr<domain::Match>), FindLastOpenMatch, (std::string_view tournamentId), (override));
+    MOCK_METHOD((std::vector<std::shared_ptr<domain::Match>>), GetMatchesByTeamId, (std::string_view tournamentId, std::string_view teamId), (override));
     MOCK_METHOD((std::vector<std::shared_ptr<domain::Match>>), FindMatchesByTournamentAndRound, (std::string_view tournamentId, std::string_view round), (override));
     MOCK_METHOD((std::vector<std::shared_ptr<domain::Match>>), FindAllByTournamentId, (std::string_view tournamentId), (override));
     MOCK_METHOD((std::shared_ptr<domain::Match>), FindByIdAndTournamentId, (std::string_view matchId, std::string_view tournamentId), (override));
@@ -195,18 +195,8 @@ TEST_F(MatchDelegateTest, CreateMatch_Success) {
     EXPECT_EQ(result.value(), newId);
 }
 
-TEST_F(MatchDelegateTest, GetNextOpenMatch_Success) {
-    auto match = std::make_shared<domain::Match>();
-    match->Id() = "open-match";
 
-    EXPECT_CALL(*matchRepoMock, FindLastOpenMatch(TOURNAMENT_ID))
-        .WillOnce(testing::Return(match));
-
-    auto result = matchDelegate->GetNextOpenMatch(TOURNAMENT_ID);
-
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result.value().Id(), "open-match");
-}
+// --- Pruebas para GetMatchesByRound ---
 
 TEST_F(MatchDelegateTest, GetMatchesByRound_Success) {
     auto match = std::make_shared<domain::Match>();
@@ -221,4 +211,68 @@ TEST_F(MatchDelegateTest, GetMatchesByRound_Success) {
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value().size(), 1);
+}
+
+TEST_F(MatchDelegateTest, GetMatchesByRound_EmptyResult_Success) {
+    const std::string round = "playoffs";
+
+    std::vector<std::shared_ptr<domain::Match>> emptyMatches;
+
+    EXPECT_CALL(*tournamentRepoMock, ReadById(TOURNAMENT_ID))
+        .WillOnce(testing::Return(std::make_shared<domain::Tournament>()));
+
+    EXPECT_CALL(*matchRepoMock, FindMatchesByTournamentAndRound(TOURNAMENT_ID, round))
+        .WillOnce(testing::Return(emptyMatches));
+
+    auto result = matchDelegate->GetMatchesByRound(TOURNAMENT_ID, round);
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_TRUE(result.value().empty());
+}
+
+TEST_F(MatchDelegateTest, GetMatchesByRound_TournamentNotFound) {
+    const std::string round = "quarterfinals";
+
+    EXPECT_CALL(*tournamentRepoMock, ReadById(TOURNAMENT_ID))
+        .WillOnce(testing::Return(nullptr));
+
+    // No se debe llamar al repositorio de matches si el torneo no existe
+    EXPECT_CALL(*matchRepoMock, FindMatchesByTournamentAndRound(::testing::_, ::testing::_))
+        .Times(0);
+
+    auto result = matchDelegate->GetMatchesByRound(TOURNAMENT_ID, round);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "Tournament not found.");
+}
+
+TEST_F(MatchDelegateTest, GetMatchesByRound_DifferentRounds) {
+    // Test multiple round types
+    std::vector<std::string> rounds = {
+        "regular", "playoffs", "quarterfinals", "semifinals", "finals", "wildcard"
+    };
+
+    for (const auto& round : rounds) {
+        auto mockMatch = std::make_shared<domain::Match>();
+        mockMatch->Id() = "match-" + round;
+        mockMatch->Round() = round;
+
+        std::vector<std::shared_ptr<domain::Match>> mockMatches = {mockMatch};
+
+        EXPECT_CALL(*tournamentRepoMock, ReadById(TOURNAMENT_ID))
+            .WillOnce(testing::Return(std::make_shared<domain::Tournament>()));
+
+        EXPECT_CALL(*matchRepoMock, FindMatchesByTournamentAndRound(TOURNAMENT_ID, round))
+            .WillOnce(testing::Return(mockMatches));
+
+        auto result = matchDelegate->GetMatchesByRound(TOURNAMENT_ID, round);
+
+        ASSERT_TRUE(result.has_value()) << "Failed for round: " << round;
+        EXPECT_EQ(result.value().size(), 1);
+        EXPECT_EQ(result.value()[0].Round(), round);
+
+        // Clear mocks for next iteration
+        testing::Mock::VerifyAndClearExpectations(tournamentRepoMock.get());
+        testing::Mock::VerifyAndClearExpectations(matchRepoMock.get());
+    }
 }

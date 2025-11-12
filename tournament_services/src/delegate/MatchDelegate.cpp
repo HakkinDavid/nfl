@@ -79,24 +79,17 @@ std::expected<void, std::string> MatchDelegate::UpdateMatchScore(std::string_vie
         matchRepo->UpdateScore(matchId, tournamentId, score);
 
         // Generar evento al registrar marcador
-        std::string eventMessage = std::format("{{\"matchId\": \"{}\", \"tournamentId\": \"{}\"}}", matchId, tournamentId);
+        //std::string eventMessage = std::format("{{\"matchId\": \"{}\", \"tournamentId\": \"{}\"}}", matchId, tournamentId);
+        std::string eventMessage = "{\"matchId\": \"" + std::string(matchId) + "\", \"tournamentId\": \"" + std::string(tournamentId) + "\"}";
         producer->SendMessage(eventMessage, "match.score.updated");
 
         return {}; // Éxito
     } catch (const domain::NotFoundException& e) {
         return std::unexpected("Match not found.");
     } catch (const std::exception& e) {
-        return std::unexpected(std::format("System error: {}", e.what()));
+        return std::unexpected("System error: " + std::string(e.what()));
     }
 }
-
-// std::expected<domain::Match, std::string> MatchDelegate::GetNextOpenMatch(std::string_view tournamentId) {
-//     auto match = matchRepo->FindLastOpenMatch(tournamentId);
-//     if (!match) {
-//         return std::unexpected("No open match found for this tournament.");
-//     }
-//     return *match;
-// }
 
 std::expected<std::vector<domain::Match>, std::string> MatchDelegate::GetMatchesByRound(std::string_view tournamentId, std::string_view round) {
     if (!tournamentRepo->ReadById(std::string(tournamentId))) {

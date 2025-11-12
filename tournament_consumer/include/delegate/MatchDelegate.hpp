@@ -163,19 +163,19 @@ inline void MatchDelegate::createGroupMatches(const std::string& tournamentId) {
     domain::Match match1, match2, match3, match4;
 
     match1.TournamentId() = tournamentId; match1.Home() = playoffTeams[0];
-    match1.Visitor() = c1winners[2]; match1.Round() = "Group";
+    match1.Visitor() = playoffTeams[c1winners[2]]; match1.Round() = "Group";
     createMatch(match1);
 
-    match2.TournamentId() = tournamentId; match2.Home() = c1winners[0];
-    match2.Visitor() = c1winners[1]; match2.Round() = "Group";
+    match2.TournamentId() = tournamentId; match2.Home() = playoffTeams[c1winners[0]];
+    match2.Visitor() = playoffTeams[c1winners[1]]; match2.Round() = "Group";
     createMatch(match2);
 
     match3.TournamentId() = tournamentId; match3.Home() = playoffTeams[7];
-    match3.Visitor() = c2winners[2]; match3.Round() = "Group";
+    match3.Visitor() = playoffTeams[c2winners[2]]; match3.Round() = "Group";
     createMatch(match3);
 
-    match4.TournamentId() = tournamentId; match4.Home() = c2winners[0];
-    match4.Visitor() = c2winners[1]; match4.Round() = "Group";
+    match4.TournamentId() = tournamentId; match4.Home() = playoffTeams[c2winners[0]];
+    match4.Visitor() = playoffTeams[c2winners[1]]; match4.Round() = "Group";
     createMatch(match4);
 }
 inline void MatchDelegate::createConferenceMatches(const std::string& tournamentId) {
@@ -262,7 +262,7 @@ inline std::vector<domain::Team> MatchDelegate::getPlayoffTeams(const std::strin
                 }
 
                 teamWP = (teamWP + teamWins) / 10;
-                groupTeams.emplace_back({team, teamWP, teamWins});
+                groupTeams.emplace_back(team, teamWins, teamWP);
             }
 
             groupTeams = sortTeams(groupTeams);
