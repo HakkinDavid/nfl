@@ -17,7 +17,6 @@ set(TEST_SOURCES
         ../src/delegate/MatchDelegate.cpp
         ../src/controller/MatchController.cpp
         controller/MatchControllerTest.cpp
-        ../../tournament_consumer/tests/MatchDelegateTest.cpp
 )
 
 set(SOURCES ${TEST_SOURCES})

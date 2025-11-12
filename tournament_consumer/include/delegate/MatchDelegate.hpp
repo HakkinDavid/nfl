@@ -106,7 +106,10 @@ inline bool MatchDelegate::checkPrevRound(const std::string& tournamentId, const
 inline std::expected<void, std::string> MatchDelegate::generateNextRound(const std::string& matchId, const std::string& tournamentId) {
     try {
         auto match = matchRepository->FindByIdAndTournamentId(matchId, tournamentId);
-        
+
+        if (!match) {
+            return std::unexpected("Match not found.");
+        }
         std::string prevRound = match->Round();
         if (prevRound == "Finals") return {};
         

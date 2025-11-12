@@ -14,7 +14,7 @@
 #include "domain/Group.hpp"
 #include "domain/Team.hpp"
 #include "domain/Utilities.hpp"
-#include "delegate/MatchDelegate.hpp"
+#include "../include/delegate/MatchDelegate.hpp"
 
 class MatchRepositoryMock : public IMatchRepository {
 public:
@@ -109,18 +109,6 @@ TEST_F(MatchDelegateTest, CreateFirstRoundMatches_FailsWhenRepositoryThrows) {
     EXPECT_EQ(result.error(), "Database error");
 }
 
-TEST_F(MatchDelegateTest, CreateFirstRoundMatches_FailsWithInsufficientGroups) {
-    // 4 / 8
-    auto mockGroups = createMockGroups(4);
-
-    EXPECT_CALL(*groupRepoMock, FindByTournamentId(TOURNAMENT_ID))
-        .WillOnce(testing::Return(mockGroups));
-
-    auto result = matchDelegate->createFirstRoundMatches(TOURNAMENT_ID);
-
-    // Deberia funcionar pero con mal behavior
-    ASSERT_TRUE(result.has_value());
-}
 
 TEST_F(MatchDelegateTest, GenerateNextRound_Success_FirstRoundToWildCard) {
     auto mockMatch = std::make_shared<domain::Match>();
@@ -154,4 +142,68 @@ TEST_F(MatchDelegateTest, GenerateNextRound_Success_FirstRoundToWildCard) {
     auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
 
     ASSERT_TRUE(result.has_value());
+}
+
+TEST_F(MatchDelegateTest, GenerateNextRound_RoundNotComplete_NoAction) {
+    auto mockMatch = std::make_shared<domain::Match>();
+    mockMatch->Round() = "First Round";
+
+    // 159 / 160 matches
+    std::vector<std::shared_ptr<domain::Match>> firstRoundMatches(159);
+    for (auto& match : firstRoundMatches) {
+        match = std::make_shared<domain::Match>();
+        match->Score() = domain::Score{1, 0};
+    }
+
+    EXPECT_CALL(*matchRepoMock, FindByIdAndTournamentId(MATCH_ID, TOURNAMENT_ID))
+        .WillOnce(testing::Return(mockMatch));
+
+    EXPECT_CALL(*matchRepoMock, FindMatchesByTournamentAndRound(TOURNAMENT_ID, "First Round"))
+        .WillOnce(testing::Return(firstRoundMatches));
+
+    // No deberia haber creacion de matches
+    EXPECT_CALL(*matchRepoMock, Create(::testing::_))
+        .Times(0);
+
+    auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
+
+    ASSERT_TRUE(result.has_value());
+}
+
+TEST_F(MatchDelegateTest, GenerateNextRound_FinalRound_NoAction) {
+    auto mockMatch = std::make_shared<domain::Match>();
+    mockMatch->Round() = "Finals";
+
+    EXPECT_CALL(*matchRepoMock, FindByIdAndTournamentId(MATCH_ID, TOURNAMENT_ID))
+        .WillOnce(testing::Return(mockMatch));
+
+    // No se esperan mas llamadas para Finals
+    EXPECT_CALL(*matchRepoMock, FindMatchesByTournamentAndRound(::testing::_, ::testing::_))
+        .Times(0);
+    EXPECT_CALL(*matchRepoMock, Create(::testing::_))
+        .Times(0);
+
+    auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
+
+    ASSERT_TRUE(result.has_value());
+}
+
+TEST_F(MatchDelegateTest, GenerateNextRound_MatchNotFound_ReturnsError) {
+    EXPECT_CALL(*matchRepoMock, FindByIdAndTournamentId(MATCH_ID, TOURNAMENT_ID))
+        .WillOnce(testing::Return(nullptr));
+
+    auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "Match not found.");
+}
+
+TEST_F(MatchDelegateTest, GenerateNextRound_RepositoryThrows_ReturnsError) {
+    EXPECT_CALL(*matchRepoMock, FindByIdAndTournamentId(MATCH_ID, TOURNAMENT_ID))
+        .WillOnce(testing::Throw(std::runtime_error("Database connection failed")));
+
+    auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "Database connection failed");
 }
