@@ -90,13 +90,13 @@ std::expected<void, std::string> MatchDelegate::UpdateMatchScore(std::string_vie
     }
 }
 
-std::expected<domain::Match, std::string> MatchDelegate::GetNextOpenMatch(std::string_view tournamentId) {
-    auto match = matchRepo->FindLastOpenMatch(tournamentId);
-    if (!match) {
-        return std::unexpected("No open match found for this tournament.");
-    }
-    return *match;
-}
+// std::expected<domain::Match, std::string> MatchDelegate::GetNextOpenMatch(std::string_view tournamentId) {
+//     auto match = matchRepo->FindLastOpenMatch(tournamentId);
+//     if (!match) {
+//         return std::unexpected("No open match found for this tournament.");
+//     }
+//     return *match;
+// }
 
 std::expected<std::vector<domain::Match>, std::string> MatchDelegate::GetMatchesByRound(std::string_view tournamentId, std::string_view round) {
     if (!tournamentRepo->ReadById(std::string(tournamentId))) {

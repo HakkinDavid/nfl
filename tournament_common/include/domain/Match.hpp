@@ -7,7 +7,7 @@
 #include "domain/Team.hpp"
 
 namespace domain {
-    enum class Winner { HOME, VISITOR };
+    enum class Winner { HOME, VISITOR, TIE };
 
     struct Score {
         int homeTeamScore;
@@ -16,8 +16,9 @@ namespace domain {
         [[nodiscard]] Winner GetWinner() const {
             if (visitorTeamScore < homeTeamScore) {
                 return Winner::HOME;
-            }
-            return Winner::VISITOR;
+            } else if (visitorTeamScore > homeTeamScore) {
+                return Winner::VISITOR;
+            } else return Winner::TIE;
         }
     };
 

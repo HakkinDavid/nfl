@@ -24,7 +24,7 @@ public:
     std::vector<std::shared_ptr<domain::Match>> FindAllByTournamentId(std::string_view tournamentId) override;
     std::shared_ptr<domain::Match> FindByIdAndTournamentId(std::string_view matchId, std::string_view tournamentId) override;
     std::string UpdateScore(std::string_view matchId, std::string_view tournamentId, const domain::Score& score) override;
-    std::shared_ptr<domain::Match> FindLastOpenMatch(std::string_view tournamentId) override;
+    std::vector<std::shared_ptr<domain::Match>> GetMatchesByTeamId(std::string_view tournamentId, std::string_view teamId) override;
     std::vector<std::shared_ptr<domain::Match>> FindMatchesByTournamentAndRound(std::string_view tournamentId, std::string_view round) override;
 };
 
