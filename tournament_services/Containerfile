@@ -13,6 +13,8 @@ RUN export VCPKG_BINARY_SOURCES="clear;files,/opt/vcpkg/binary-cache,readwrite"
 
 RUN git clone --depth 1 https://github.com/HakkinDavid/nfl.git /root/tournaments
 
+COPY configuration.json /root/tournaments/tournament_services/configuration.json
+
 # Set working directory for build
 WORKDIR /root/tournaments
 
@@ -24,8 +26,8 @@ RUN cmake --build /root/tournaments/cmake-build-release --target tournament_serv
 FROM fedora-minimal:42
 
 # Set metadata
-LABEL maintainer="your-email@example.com"
-LABEL description="CMake application on Fedora"
+LABEL maintainer="david.santana@cetys.edu.mx"
+LABEL description="Tournament Services"
 
 # Install only runtime dependencies (if needed)
 # Example: If your app needs specific libraries
