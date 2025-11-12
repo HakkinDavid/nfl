@@ -13,18 +13,18 @@ int main() {
         const auto container = config::containerSetup();
         std::println("after container");
 
-        std::thread tournamentCreatedThread([&] {
+        std::thread tournamentReadyThread([&] {
             auto listener = container->resolve<TournamentReadyListener>();
             listener->Start("tournament.ready");
         });
-        std::thread matchCreatedThread([&] {
-            auto listener = container->resolve<MatchCreatedListener>();
-            listener->Start("match.created");
+        std::thread matchScoreUpdatedThread([&] {
+            auto listener = container->resolve<MatchScoreUpdatedListener>();
+            listener->Start("match.score.updated");
         });
         //crear otro thread aqui
 
-        tournamentCreatedThread.join();
-        matchCreatedThread.join();
+        tournamentReadyThread.join();
+        matchScoreUpdatedThread.join();
         //join de otro thread aqui
         // while (true) {
         //     std::this_thread::sleep_for(std::chrono::seconds(5));
