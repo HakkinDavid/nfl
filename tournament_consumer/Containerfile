@@ -18,12 +18,19 @@ RUN cmake --build /root/tournaments/cmake-build-release --target tournament_cons
 
 # Stage 2: Runtime stage
 FROM fedora:42
-RUN dnf install -y libpqxx activemq-cpp libicu openssl && dnf clean all
+RUN dnf install -y libstdc++ libgcc openssl libicu && dnf clean all
 RUN useradd -m -u 1001 appuser
 WORKDIR /app
 
+# Copy binary
 COPY --from=builder /root/tournaments/cmake-build-release/tournament_consumer/tournament_consumer /app/
 COPY --from=builder /root/tournaments/cmake-build-release/tournament_consumer/configuration.json /app/
+
+# Copy all vcpkg libraries (shared objects and their symlinks)
+COPY --from=builder /opt/vcpkg/installed/x64-linux/lib/ /usr/local/lib/
+
+# Update library cache
+RUN ldconfig
 
 RUN chown -R appuser:appuser /app
 USER appuser
