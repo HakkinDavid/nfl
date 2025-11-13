@@ -1,0 +1,26 @@
+# Build directories
+cmake-build-*/
+build/
+out/
+
+# IDE directories
+.idea/
+.vscode/
+.vs/
+
+# Git
+.git/
+.gitignore
+
+# Temporary files
+*.tmp
+*.log
+*.swp
+*~
+
+# vcpkg (will be cloned fresh in container)
+vcpkg/
+vcpkg_installed/
+
+# Node modules
+node_modules/
