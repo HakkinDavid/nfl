@@ -102,9 +102,17 @@ std::expected<void, std::string> GroupDelegate::AddTeamToGroup(std::string_view 
         return std::unexpected(std::format("Team {} is already in a group in this tournament.", team.Name));
     }
 
-    groupRepository->UpdateGroupAddTeam(groupId, team);
-    checkAndPublishTournamentReadyEvent(tournamentId);
-    return {};
+    try {
+        groupRepository->UpdateGroupAddTeam(groupId, team);
+        checkAndPublishTournamentReadyEvent(tournamentId);
+        return {};
+    } catch (const domain::NotFoundException& e) {
+        return std::unexpected(e.what());
+    } catch (const domain::DuplicateEntryException& e) {
+        return std::unexpected(e.what());
+    } catch (const std::exception& e) {
+        return std::unexpected(std::format("Error adding team to group: {}", e.what()));
+    }
 }
 
 std::expected<void, std::string> GroupDelegate::UpdateGroupName(std::string_view tournamentId, std::string_view groupId, const domain::Group& groupUpdatePayload) {

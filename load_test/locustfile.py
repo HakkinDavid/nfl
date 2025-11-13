@@ -102,7 +102,7 @@ class TournamentUser(HttpUser):
                 catch_response=True,
                 name=f"PATCH /tournaments/{tournament_id}/matches/{match_id}"
         ) as response:
-            if response.status_code != 200 and response.status_code != 201:
+            if response.status_code not in [200, 201, 204]:
                 response.failure(f"falló actualizar el marcador: {response.status_code}")
 
     def simulate_round(self, tournament_id: Any, round_name: str, expected_matches: int, no_ties=False):
