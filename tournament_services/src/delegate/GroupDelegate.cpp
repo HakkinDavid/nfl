@@ -11,6 +11,7 @@
 #include "cms/IQueueMessageProducer.hpp"
 #include <utility>
 #include <format>
+#include <iostream>
 
 GroupDelegate::GroupDelegate(std::shared_ptr<IRepository<domain::Tournament, std::string>> tournamentRepo,
                              std::shared_ptr<IGroupRepository> groupRepo,
