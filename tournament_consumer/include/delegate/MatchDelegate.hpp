@@ -293,7 +293,7 @@ inline std::vector<TeamRecord> MatchDelegate::sortTeams(std::vector<TeamRecord> 
             return std::get<1>(a) > std::get<1>(b); 
         } else if (std::get<2>(a) != std::get<2>(b)) { // Second by number of wins
             return std::get<2>(a) > std::get<2>(b);
-        } else if (sttd::get<3>(a) != std::get<3>(b)) { // Third by net points scored
+        } else if (std::get<3>(a) != std::get<3>(b)) { // Third by net points scored
             return std::get<3>(a) > std::get<3>(b);
         } else { // And then alphabetically by team name
             return std::get<0>(a).Name < std::get<0>(b).Name;

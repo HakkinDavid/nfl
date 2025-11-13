@@ -76,6 +76,24 @@ protected:
         }
         return groups;
     }
+
+    std::shared_ptr<domain::Match> createMockMatch(const std::string& id,
+                                              const std::string& homeId, const std::string& homeName,
+                                              const std::string& visitorId, const std::string& visitorName,
+                                              const std::string& round, int homeScore = 0, int visitorScore = 0) {
+        auto match = std::make_shared<domain::Match>();
+        match->Id() = id;
+        match->Home() = domain::Team{homeId, homeName};
+        match->Visitor() = domain::Team{visitorId, visitorName};
+        match->Round() = round;
+        match->TournamentId() = TOURNAMENT_ID;
+
+        if (homeScore > 0 || visitorScore > 0) {
+            match->Score() = domain::Score{homeScore, visitorScore};
+        }
+
+        return match;
+    }
 };
 
 TEST_F(MatchDelegateTest, CreateFirstRoundMatches_Success) {
@@ -206,4 +224,67 @@ TEST_F(MatchDelegateTest, GenerateNextRound_RepositoryThrows_ReturnsError) {
 
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), "Database connection failed");
+}
+TEST_F(MatchDelegateTest, GenerateNextRound_GroupToConference_CreatesCorrectMatches) {
+    auto triggerMatch = std::make_shared<domain::Match>();
+    triggerMatch->Round() = "Group";
+    triggerMatch->Id() = "match-170";
+
+    std::vector<std::shared_ptr<domain::Match>> groupMatches = {
+        createMockMatch("match-167", "team-14", "Team 14", "team-2", "Team 2", "Group", 7, 5),
+        createMockMatch("match-168", "team-9", "Team 9", "team-4", "Team 4", "Group", 8, 4),
+        createMockMatch("match-169", "team-24", "Team 24", "team-19", "Team 19", "Group", 10, 6),
+        createMockMatch("match-170", "team-17", "Team 17", "team-21", "Team 21", "Group", 3, 9)
+    };
+
+    auto mockGroups = createMockGroups(8);
+
+    EXPECT_CALL(*matchRepoMock, FindByIdAndTournamentId(MATCH_ID, TOURNAMENT_ID))
+        .WillOnce(testing::Return(triggerMatch));
+
+    EXPECT_CALL(*matchRepoMock, FindMatchesByTournamentAndRound(TOURNAMENT_ID, "Group"))
+        .Times(2)
+        .WillRepeatedly(testing::Return(groupMatches));
+
+    EXPECT_CALL(*groupRepoMock, FindByTournamentId(TOURNAMENT_ID))
+        .WillOnce(testing::Return(mockGroups));
+
+    EXPECT_CALL(*matchRepoMock, Create(::testing::_))
+        .Times(2)
+        .WillRepeatedly(testing::Return("new-match-id"));
+
+    auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
+    ASSERT_TRUE(result.has_value());
+}
+
+TEST_F(MatchDelegateTest, GenerateNextRound_ConferenceToFinals_CreatesCorrectMatch) {
+    auto triggerMatch = std::make_shared<domain::Match>();
+    triggerMatch->Round() = "Conference";
+    triggerMatch->Id() = "match-172";
+
+    std::vector<std::shared_ptr<domain::Match>> conferenceMatches = {
+        createMockMatch("match-171", "team-14", "Team 14", "team-9", "Team 9", "Conference", 3, 4),  // team-9 wins
+        createMockMatch("match-172", "team-24", "Team 24", "team-21", "Team 21", "Conference", 8, 2)  // team-24 wins
+    };
+
+    EXPECT_CALL(*matchRepoMock, FindByIdAndTournamentId(MATCH_ID, TOURNAMENT_ID))
+        .WillOnce(testing::Return(triggerMatch));
+
+    EXPECT_CALL(*matchRepoMock, FindMatchesByTournamentAndRound(TOURNAMENT_ID, "Conference"))
+        .Times(2)
+        .WillRepeatedly(testing::Return(conferenceMatches));
+
+    EXPECT_CALL(*matchRepoMock, Create(::testing::_))
+        .Times(1)
+        .WillOnce(testing::Invoke([](const domain::Match& match) {
+            EXPECT_EQ(match.Round(), "Finals");
+            EXPECT_EQ(match.Home().Id, "team-9");
+            EXPECT_EQ(match.Home().Name, "Team 9");
+            EXPECT_EQ(match.Visitor().Id, "team-24");
+            EXPECT_EQ(match.Visitor().Name, "Team 24");
+            return "match-173";
+        }));
+
+    auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
+    ASSERT_TRUE(result.has_value());
 }
