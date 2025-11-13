@@ -48,8 +48,10 @@ public:
             // connectionPool.back()->prepare("update_group", "update GROUPS set name = $2, last_update_date = CURRENT_TIMESTAMP where id = $1  RETURNING id");
             connectionPool.back()->prepare("update_group_add_team", R"(
                 update groups
-                    set document = jsonb_insert(
-                            document, '{teams,-1}', $2
+                    set document = jsonb_set(
+                            document,
+                            '{teams}',
+                            coalesce(document->'teams', '[]'::jsonb) || $2::jsonb
                                    ),
                     last_update_date = CURRENT_TIMESTAMP
                 where id = $1
