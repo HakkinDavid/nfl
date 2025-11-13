@@ -85,7 +85,11 @@ crow::response GroupController::AddTeamToGroup(const crow::request& req, const s
         return crow::response(crow::NO_CONTENT);
     }
 
-    return crow::response(422, result.error());
+    // Log the error for debugging
+    CROW_LOG_WARNING << "AddTeamToGroup failed: " << result.error();
+
+    // Use 400 instead of 422 since Crow doesn't natively support 422
+    return crow::response(crow::BAD_REQUEST, result.error());
 }
 
 crow::response GroupController::UpdateGroupName(const crow::request& req, const std::string& tournamentId, const std::string& groupId) const {
