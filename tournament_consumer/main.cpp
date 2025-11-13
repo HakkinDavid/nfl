@@ -18,6 +18,11 @@ int main() {
         auto container = config::containerSetup();
         std::println("after container");
 
+        // Pre-resolve ConnectionManager to ensure it's fully initialized before threads start
+        std::cout << "Pre-initializing ConnectionManager..." << std::endl;
+        auto connectionManager = container->resolve<ConnectionManager>();
+        std::cout << "ConnectionManager initialized" << std::endl;
+
         std::cout << "Creating tournamentReadyThread..." << std::endl;
         std::thread tournamentReadyThread([container] {
             std::cout << "[Thread1] Starting, resolving TournamentReadyListener..." << std::endl;
