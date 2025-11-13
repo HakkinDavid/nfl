@@ -157,6 +157,15 @@ void GroupRepository::UpdateGroupAddTeam(std::string_view groupId, const domain:
 
     std::cout << "[DEBUG] Executing parameterized SQL" << std::endl;
     tx.exec_params(sql, teamDocument.dump(), std::string(groupId));
+
+    // Check what's in the DB after update
+    std::string checkSQL = "SELECT jsonb_array_length(document->'teams'), document->'teams' FROM groups WHERE id = $1";
+    auto result = tx.exec_params(checkSQL, std::string(groupId));
+    if (!result.empty()) {
+        std::cout << "[DEBUG] After UPDATE - Team count: " << result[0][0].c_str()
+                  << ", Teams array: " << result[0][1].c_str() << std::endl;
+    }
+
     tx.commit();
 
     std::cout << "[DEBUG] UpdateGroupAddTeam completed" << std::endl;
