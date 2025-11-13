@@ -46,14 +46,14 @@ public:
 
             connectionPool.back()->prepare("select_group_by_tournamentid_groupid", "select * from GROUPS where tournament_id = $1 and id = $2");
             // connectionPool.back()->prepare("update_group", "update GROUPS set name = $2, last_update_date = CURRENT_TIMESTAMP where id = $1  RETURNING id");
-            connectionPool.back()->prepare("update_group_add_team", R"(
+            connectionPool.back()->prepare("update_group_add_team_v2", R"(
                 update groups
-                    set document = CASE
-                        WHEN document ? 'teams' THEN
-                            jsonb_set(document, '{teams}', (document->'teams') || jsonb_build_array($2::jsonb))
-                        ELSE
-                            jsonb_set(document, '{teams}', jsonb_build_array($2::jsonb))
-                        END,
+                    set document = jsonb_set(
+                            document,
+                            '{teams}',
+                            COALESCE(document->'teams', '[]'::jsonb) || $2::jsonb,
+                            true
+                        ),
                     last_update_date = CURRENT_TIMESTAMP
                 where id = $1
             )");

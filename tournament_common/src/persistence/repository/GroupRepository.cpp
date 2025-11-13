@@ -147,7 +147,12 @@ void GroupRepository::UpdateGroupAddTeam(std::string_view groupId, const domain:
     auto pooled = connectionProvider->Connection();
     auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
     pqxx::work tx(*(connection->connection));
-    tx.exec(pqxx::prepped{"update_group_add_team"}, pqxx::params{groupId, teamDocument.dump()});
+
+    // Wrap team in array for concatenation: [team]
+    std::string teamArray = "[" + teamDocument.dump() + "]";
+    std::cout << "[DEBUG] Team array to concatenate: " << teamArray << std::endl;
+
+    tx.exec(pqxx::prepped{"update_group_add_team_v2"}, pqxx::params{groupId, teamArray});
     tx.commit();
 
     std::cout << "[DEBUG] UpdateGroupAddTeam completed" << std::endl;
