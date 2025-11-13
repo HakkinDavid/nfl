@@ -171,24 +171,50 @@ Delegate tests check for:
     upon the possible values that the mock Repository's function could return and then comparing its 
     returned value in the test with the value/error that we expect.
 
-2.2. Teams
 
-The body of a Team in JavaScript Object Notation is {"id":"team-id","name":"team-name"}. The ID of the
-team is assigned by the database at the time of creation.
-In the logic.cpp implementation, a Team object also has the attributes conference (string) and netPoints
-(integer). The conference tag was a suggestion by the professor, however I do not believe it is necessary,
-as we can simply divide logically the first 4 Groups into the first Conference and the other 4 in the 
-second one. As for netPoints, this will be a pain to implement (not impossible, we can use some clever 
-database view tricks) but we don't need to do that yet.
+3. Imagine wanting to finish this
 
-2.2.1. URI: /teams
+EXAMPLE OF FIRST ROUND MATCHES WITH SCORES
+See first_round_matches.txt because it's a Lot.
 
-For this URI, there are two methods we must account for.
+WHICH SHOULD GENERATE THE FOLLOWING PLAYOFF TEAMS ARRAY
+(Only IDs shown) [team-14, team-1,  team-9,  team-4,  team-15, team-12, team-2,
+                  team-24, team-22, team-17, team-28, team-21, team-29, team-19]
+AND THE FOLLOWING WILD CARD ROUND MATCHES
+[{"home":{"id":"team-1","name":"Team 1"},"visitor":{"id":"team-2","name":"Team 2"},"round":"Wild Card"},
+{"home":{"id":"team-9","name":"Team 9"},"visitor":{"id":"team-12","name":"Team 12"},"round":"Wild Card"},
+{"home":{"id":"team-4","name":"Team 4"},"visitor":{"id":"team-15","name":"Team 15"},"round":"Wild Card"},
+{"home":{"id":"team-22","name":"Team 22"},"visitor":{"id":"team-19","name":"Team 19"},"round":"Wild Card"},
+{"home":{"id":"team-17","name":"Team 17"},"visitor":{"id":"team-29","name":"Team 29"},"round":"Wild Card"},
+{"home":{"id":"team-28","name":"Team 28"},"visitor":{"id":"team-21","name":"Team 21"},"round":"Wild Card"}]
 
-POST - This creates a Team. It receives only the name {"name":"team-name"} and the ID is generated 
-automatically. In the case it receives a correct body, the function that processes this request must
+PREVIOUS WILD CARD ROUND MATCHES WITH SCORES (and new IDs)
+[{"id":"match-161","home":{"id":"team-1","name":"Team 1"},"visitor":{"id":"team-2","name":"Team 2"},"round":"Wild Card","score":{"home":4,"visitor":7}},
+{"id":"match-162","home":{"id":"team-9","name":"Team 9"},"visitor":{"id":"team-12","name":"Team 12"},"round":"Wild Card","score":{"home":5,"visitor":3}},
+{"id":"match-163","home":{"id":"team-4","name":"Team 4"},"visitor":{"id":"team-15","name":"Team 15"},"round":"Wild Card","score":{"home":8,"visitor":3}},
+{"id":"match-164","home":{"id":"team-22","name":"Team 22"},"visitor":{"id":"team-19","name":"Team 19"},"round":"Wild Card","score":{"home":6,"visitor":10}},
+{"id":"match-165","home":{"id":"team-17","name":"Team 17"},"visitor":{"id":"team-29","name":"Team 29"},"round":"Wild Card","score":{"home":2,"visitor":1}},
+{"id":"match-166","home":{"id":"team-28","name":"Team 28"},"visitor":{"id":"team-21","name":"Team 21"},"round":"Wild Card","score":{"home":2,"visitor":9}}]
 
-=================================================================
-blah blah blah ill finish this later i just need yall to get goin
-im pushing this rn, the instructions on what the tests should check for are literally
-in the blackboard document just use that for now
+GIVEN THE PREVIOUS PLAYOFF TEAMS, IT SHOULD GENERATE THE FOLLOWING GROUP ROUND MATCHES
+[{"home":{"id":"team-14","name":"Team 14"},"visitor":{"id":"team-2","name":"Team 2"},"round":"Group"},
+{"home":{"id":"team-9","name":"Team 9"},"visitor":{"id":"team-4","name":"Team 4"},"round":"Group"},
+{"home":{"id":"team-24","name":"Team 24"},"visitor":{"id":"team-19","name":"Team 19"},"round":"Group"},
+{"home":{"id":"team-17","name":"Team 17"},"visitor":{"id":"team-21","name":"Team 21"},"round":"Group"}]
+
+PREVIOUS GROUP ROUND MATCHES WITH SCORES (and new IDs)
+[{"id":"match-167","home":{"id":"team-14","name":"Team 14"},"visitor":{"id":"team-2","name":"Team 2"},"round":"Group","score":{"home":7,"visitor":5}},
+{"id":"match-168","home":{"id":"team-9","name":"Team 9"},"visitor":{"id":"team-4","name":"Team 4"},"round":"Group","score":{"home":8,"visitor":4}},
+{"id":"match-169","home":{"id":"team-24","name":"Team 24"},"visitor":{"id":"team-19","name":"Team 19"},"round":"Group","score":{"home":10,"visitor":6}},
+{"id":"match-170","home":{"id":"team-17","name":"Team 17"},"visitor":{"id":"team-21","name":"Team 21"},"round":"Group","score":{"home":3,"visitor":9}}]
+
+WHICH SHOULD GENERATE THE FOLLOWING CONFERENCE ROUND MATCHES
+[{"home":{"id":"team-14","name":"Team 14"},"visitor":{"id":"team-9","name":"Team 9"},"round":"Conference"},
+{"home":{"id":"team-24","name":"Team 24"},"visitor":{"id":"team-21","name":"Team 21"},"round":"Conference"}]
+
+PREVIOUS CONFERENCE ROUND MATCHES WITH SCORES (and new IDs)
+[{"id":"match-171","home":{"id":"team-14","name":"Team 14"},"visitor":{"id":"team-9","name":"Team 9"},"round":"Conference","score":{"home":3,"visitor":4}},
+{"id":"match-172","home":{"id":"team-24","name":"Team 24"},"visitor":{"id":"team-21","name":"Team 21"},"round":"Conference","score":{"home":8,"visitor":2}}]
+
+WHICH SHOULD GENERATE THE FOLLOWING FINAL MATCH
+{"home":{"id":"team-9","name":"Team 9"},"visitor":{"id":"team-24","name":"Team 24"},"round":"Finals"}

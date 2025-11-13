@@ -13,7 +13,7 @@
 #include "persistence/repository/IMatchRepository.hpp"
 #include "persistence/repository/IGroupRepository.hpp"
 
-using TeamRecord = std::tuple<domain::Team, int, float>;
+using TeamRecord = std::tuple<domain::Team, float, int, int>;
 
 class MatchDelegate {
     std::shared_ptr<IGroupRepository> groupRepository;
@@ -249,6 +249,7 @@ inline std::vector<domain::Team> MatchDelegate::getPlayoffTeams(const std::strin
             for (int t=0; t < 4; ++t) {
                 int teamWins = 0;
                 float teamWP = 0;
+                int netPoints = 0;
                 auto team = groups[(c*4)+g]->Teams()[t];
                 std::string teamId = team.Id;
 
@@ -262,10 +263,14 @@ inline std::vector<domain::Team> MatchDelegate::getPlayoffTeams(const std::strin
                              (winner == domain::Winner::VISITOR && m->Visitor().Id == teamId)) { 
                         ++teamWins; 
                     }
+
+                    int netScore = m->Score().value().homeTeamScore - m->Score().value().visitorTeamScore;
+                    if (m->Home().Id == teamId) { netPoints += netScore; }
+                    else { netPoints -= netScore; }
                 }
 
                 teamWP = (teamWP + teamWins) / 10;
-                groupTeams.emplace_back(team, teamWins, teamWP);
+                groupTeams.emplace_back(team, teamWP, teamWins, netPoints);
             }
 
             groupTeams = sortTeams(groupTeams);
@@ -286,8 +291,10 @@ inline std::vector<TeamRecord> MatchDelegate::sortTeams(std::vector<TeamRecord> 
     std::sort(teams.begin(), teams.end(), [](const TeamRecord& a, const TeamRecord& b) {
         if (std::get<1>(a) != std::get<1>(b)) { // First try to sort by win percentage
             return std::get<1>(a) > std::get<1>(b); 
-        } else if (std::get<2>(a) != std::get<2>(b)) { // Then by number of wins
+        } else if (std::get<2>(a) != std::get<2>(b)) { // Second by number of wins
             return std::get<2>(a) > std::get<2>(b);
+        } else if (sttd::get<3>(a) != std::get<3>(b)) { // Third by net points scored
+            return std::get<3>(a) > std::get<3>(b);
         } else { // And then alphabetically by team name
             return std::get<0>(a).Name < std::get<0>(b).Name;
         }
