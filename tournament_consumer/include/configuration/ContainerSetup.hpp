@@ -31,6 +31,10 @@ namespace config {
         Hypodermic::ContainerBuilder builder;
 
         std::ifstream file("configuration.json");
+        if (!file.is_open()) {
+            std::println("ERROR: Cannot open configuration.json");
+            throw std::runtime_error("Configuration file not found");
+        }
         file >> configuration;
 
         std::shared_ptr<PostgresConnectionProvider> postgressConnection = std::make_shared<PostgresConnectionProvider>(configuration["databaseConfig"]["connectionString"].get<std::string>(), configuration["databaseConfig"]["poolSize"].get<size_t>());

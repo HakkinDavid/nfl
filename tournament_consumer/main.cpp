@@ -3,14 +3,16 @@
 //
 #include <activemq/library/ActiveMQCPP.h>
 #include <thread>
+#include <iostream>
 
 #include "configuration/ContainerSetup.hpp"
 
 int main() {
-    std::println("Starting tournament_consumer...");
-    std::println("Initializing ActiveMQ library...");
+    std::cout << "Starting tournament_consumer..." << std::endl;
+    std::cout << "Initializing ActiveMQ library..." << std::endl;
+    std::cout.flush();
     activemq::library::ActiveMQCPP::initializeLibrary();
-    std::println("ActiveMQ initialized successfully");
+    std::cout << "ActiveMQ initialized successfully" << std::endl;
     {
         std::println("before container");
         auto container = config::containerSetup();
