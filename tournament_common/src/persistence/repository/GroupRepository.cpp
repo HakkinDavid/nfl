@@ -140,9 +140,14 @@ std::shared_ptr<domain::Group> GroupRepository::FindByTournamentIdAndTeamId(cons
 void GroupRepository::UpdateGroupAddTeam(std::string_view groupId, const domain::Team& team) {
     nlohmann::json teamDocument = team;
 
+    std::cout << "[DEBUG] UpdateGroupAddTeam called - GroupID: " << groupId
+              << ", Team JSON: " << teamDocument.dump() << std::endl;
+
     auto pooled = connectionProvider->Connection();
     auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
     pqxx::work tx(*(connection->connection));
     tx.exec(pqxx::prepped{"update_group_add_team"}, pqxx::params{groupId, teamDocument.dump()});
     tx.commit();
+
+    std::cout << "[DEBUG] UpdateGroupAddTeam completed" << std::endl;
 }

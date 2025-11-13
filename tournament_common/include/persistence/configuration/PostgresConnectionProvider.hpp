@@ -51,7 +51,7 @@ public:
                     set document = jsonb_set(
                             document,
                             '{teams}',
-                            coalesce(document->'teams', '[]'::jsonb) || $2::jsonb
+                            coalesce(document->'teams', '[]'::jsonb) || jsonb_build_array($2::jsonb)
                                    ),
                     last_update_date = CURRENT_TIMESTAMP
                 where id = $1
