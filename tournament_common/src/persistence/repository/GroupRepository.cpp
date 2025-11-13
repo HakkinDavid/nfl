@@ -148,18 +148,15 @@ void GroupRepository::UpdateGroupAddTeam(std::string_view groupId, const domain:
     auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
     pqxx::work tx(*(connection->connection));
 
-    // Wrap team in array for concatenation: [team]
-    std::string teamArray = "[" + teamDocument.dump() + "]";
-    std::cout << "[DEBUG] Team array to concatenate: " << teamArray << std::endl;
-    std::cout << "[DEBUG] Using prepared statement: update_group_add_team_v2" << std::endl;
+    std::cout << "[DEBUG] Team to add: " << teamDocument.dump() << std::endl;
 
-    // Execute raw SQL to bypass prepared statement cache
+    // Use parameterized query instead of string concatenation
     std::string sql = "UPDATE groups SET document = jsonb_set(document, '{teams}', "
-                      "COALESCE(document->'teams', '[]'::jsonb) || '" + teamArray + "'::jsonb, true), "
-                      "last_update_date = CURRENT_TIMESTAMP WHERE id = '" + std::string(groupId) + "'";
+                      "COALESCE(document->'teams', '[]'::jsonb) || jsonb_build_array($1::jsonb), true), "
+                      "last_update_date = CURRENT_TIMESTAMP WHERE id = $2";
 
-    std::cout << "[DEBUG] Executing SQL: " << sql << std::endl;
-    tx.exec(sql);
+    std::cout << "[DEBUG] Executing parameterized SQL" << std::endl;
+    tx.exec_params(sql, teamDocument.dump(), std::string(groupId));
     tx.commit();
 
     std::cout << "[DEBUG] UpdateGroupAddTeam completed" << std::endl;
