@@ -85,10 +85,6 @@ crow::response GroupController::AddTeamToGroup(const crow::request& req, const s
         return crow::response(crow::NO_CONTENT);
     }
 
-    // Log the error for debugging
-    CROW_LOG_WARNING << "AddTeamToGroup failed: " << result.error();
-
-    // Use 400 instead of 422 since Crow doesn't natively support 422
     return crow::response(crow::BAD_REQUEST, result.error());
 }
 

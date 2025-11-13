@@ -35,18 +35,13 @@ inline QueueMessageListener::QueueMessageListener(const std::shared_ptr<Connecti
 }
 
 inline void QueueMessageListener::Start(const std::string_view& queueName) {
-    std::println("QueueMessageListener::Start() called for queue: {}", queueName);
     if (this->running)
         return;
     this->running = true;
     try {
-        std::println("Creating session...");
         session = connectionManager->CreateSession();
-        std::println("Session created, creating queue destination...");
         const auto destination = std::unique_ptr<cms::Queue>(session->createQueue(queueName.data()));
-        std::println("Queue created, creating consumer...");
         messageConsumer = std::shared_ptr<cms::MessageConsumer>(session->createConsumer(destination.get()));
-        std::println("Consumer created, entering message loop...");
 
         while (running) {
             std::unique_ptr<cms::Message> message(messageConsumer->receive(1500));

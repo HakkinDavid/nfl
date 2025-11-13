@@ -18,18 +18,14 @@ public:
 
 inline void MatchScoreUpdatedListener::processMessage(const std::string& message) {
     try {
-        std::println("MatchScoreUpdatedListener received message: {}", message);
         auto json = nlohmann::json::parse(message);
         // tournament_services sends: {"matchId": "...", "tournamentId": "..."}
         std::string matchId = json.at("matchId");
         std::string tournamentId = json.at("tournamentId");
 
-        std::println("Checking if next round should be generated for match {} in tournament {}", matchId, tournamentId);
         auto result = matchDelegate->generateNextRound(matchId, tournamentId);
         if (!result.has_value()) {
             std::println("MatchScoreUpdatedListener error: {}", result.error());
-        } else {
-            std::println("Next round check completed for match {} in tournament {}", matchId, tournamentId);
         }
     } catch (const nlohmann::json::exception& e) {
         std::println("JSON parse error in MatchScoreUpdatedListener: {} - Message was: {}", e.what(), message);

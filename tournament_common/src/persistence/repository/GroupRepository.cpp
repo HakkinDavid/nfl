@@ -141,32 +141,15 @@ std::shared_ptr<domain::Group> GroupRepository::FindByTournamentIdAndTeamId(cons
 void GroupRepository::UpdateGroupAddTeam(std::string_view groupId, const domain::Team& team) {
     nlohmann::json teamDocument = team;
 
-    std::cout << "[DEBUG] UpdateGroupAddTeam called - GroupID: " << groupId
-              << ", Team JSON: " << teamDocument.dump() << std::endl;
-
     auto pooled = connectionProvider->Connection();
     auto connection = dynamic_cast<PostgresConnection*>(&*pooled);
     pqxx::work tx(*(connection->connection));
 
-    std::cout << "[DEBUG] Team to add: " << teamDocument.dump() << std::endl;
-
-    // Use parameterized query instead of string concatenation
+    // Use parameterized query to safely add team to teams array
     std::string sql = "UPDATE groups SET document = jsonb_set(document, '{teams}', "
                       "COALESCE(document->'teams', '[]'::jsonb) || jsonb_build_array($1::jsonb), true), "
                       "last_update_date = CURRENT_TIMESTAMP WHERE id = $2";
 
-    std::cout << "[DEBUG] Executing parameterized SQL" << std::endl;
     tx.exec_params(sql, teamDocument.dump(), std::string(groupId));
-
-    // Check what's in the DB after update
-    std::string checkSQL = "SELECT jsonb_array_length(document->'teams'), document->'teams' FROM groups WHERE id = $1";
-    auto result = tx.exec_params(checkSQL, std::string(groupId));
-    if (!result.empty()) {
-        std::cout << "[DEBUG] After UPDATE - Team count: " << result[0][0].c_str()
-                  << ", Teams array: " << result[0][1].c_str() << std::endl;
-    }
-
     tx.commit();
-
-    std::cout << "[DEBUG] UpdateGroupAddTeam completed" << std::endl;
 }
