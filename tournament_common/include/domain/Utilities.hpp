@@ -28,6 +28,7 @@ namespace domain {
     }
 
     inline void from_json(const nlohmann::json& json, std::vector<Team>& teams) {
+        teams.clear();  // Clear existing teams before deserializing
         for (auto j = json.begin(); j != json.end(); ++j) {
             Team team;
             if(j.value().contains("id")) {
