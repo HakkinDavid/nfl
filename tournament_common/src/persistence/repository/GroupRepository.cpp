@@ -4,6 +4,7 @@
 
 #include "domain/Utilities.hpp"
 #include  "persistence/repository/GroupRepository.hpp"
+#include <iostream>
 
 GroupRepository::GroupRepository(const std::shared_ptr<IDbConnectionProvider>& connectionProvider) : connectionProvider(std::move(connectionProvider)) {}
 
