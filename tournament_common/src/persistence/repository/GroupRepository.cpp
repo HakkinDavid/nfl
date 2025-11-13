@@ -151,8 +151,15 @@ void GroupRepository::UpdateGroupAddTeam(std::string_view groupId, const domain:
     // Wrap team in array for concatenation: [team]
     std::string teamArray = "[" + teamDocument.dump() + "]";
     std::cout << "[DEBUG] Team array to concatenate: " << teamArray << std::endl;
+    std::cout << "[DEBUG] Using prepared statement: update_group_add_team_v2" << std::endl;
 
-    tx.exec(pqxx::prepped{"update_group_add_team_v2"}, pqxx::params{groupId, teamArray});
+    // Execute raw SQL to bypass prepared statement cache
+    std::string sql = "UPDATE groups SET document = jsonb_set(document, '{teams}', "
+                      "COALESCE(document->'teams', '[]'::jsonb) || '" + teamArray + "'::jsonb, true), "
+                      "last_update_date = CURRENT_TIMESTAMP WHERE id = '" + std::string(groupId) + "'";
+
+    std::cout << "[DEBUG] Executing SQL: " << sql << std::endl;
+    tx.exec(sql);
     tx.commit();
 
     std::cout << "[DEBUG] UpdateGroupAddTeam completed" << std::endl;
