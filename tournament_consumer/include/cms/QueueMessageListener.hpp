@@ -41,10 +41,10 @@ inline void QueueMessageListener::Start(const std::string_view& queueName) {
     try {
         session = connectionManager->CreateSession();
         const auto destination = std::unique_ptr<cms::Queue>(session->createQueue(queueName.data()));
-        auto consumer = std::unique_ptr<cms::MessageConsumer>(session->createConsumer(destination.get()));
+        messageConsumer = std::shared_ptr<cms::MessageConsumer>(session->createConsumer(destination.get()));
 
         while (running) {
-            std::unique_ptr<cms::Message> message(consumer->receive(1500));
+            std::unique_ptr<cms::Message> message(messageConsumer->receive(1500));
             if (message) {
                 if (auto text = dynamic_cast<cms::TextMessage*>(message.get())) {
                    processMessage(text->getText());
@@ -61,8 +61,10 @@ inline void QueueMessageListener::Stop() {
     if (worker.joinable())
         worker.join();
 
-    messageConsumer->close();
-    session->close();
+    if (messageConsumer)
+        messageConsumer->close();
+    if (session)
+        session->close();
     // connection->close();
 }
 

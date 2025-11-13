@@ -17,7 +17,8 @@ RUN cmake --build /root/tournaments/cmake-build-release --target tournament_cons
 
 
 # Stage 2: Runtime stage
-FROM fedora-minimal:42
+FROM fedora:42
+RUN dnf install -y libpqxx activemq-cpp libicu openssl && dnf clean all
 RUN useradd -m -u 1001 appuser
 WORKDIR /app
 

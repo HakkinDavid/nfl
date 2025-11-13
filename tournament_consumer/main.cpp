@@ -10,14 +10,14 @@ int main() {
     activemq::library::ActiveMQCPP::initializeLibrary();
     {
         std::println("before container");
-        const auto container = config::containerSetup();
+        auto container = config::containerSetup();
         std::println("after container");
 
-        std::thread tournamentReadyThread([&] {
+        std::thread tournamentReadyThread([container] {
             auto listener = container->resolve<TournamentReadyListener>();
             listener->Start("tournament.ready");
         });
-        std::thread matchScoreUpdatedThread([&] {
+        std::thread matchScoreUpdatedThread([container] {
             auto listener = container->resolve<MatchScoreUpdatedListener>();
             listener->Start("match.score.updated");
         });
