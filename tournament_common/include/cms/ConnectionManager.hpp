@@ -9,6 +9,7 @@
 #include <cms/Session.h>
 #include <activemq/core/ActiveMQConnectionFactory.h>
 #include <memory>
+#include <mutex>
 
 class ConnectionManager {
 public:
@@ -21,13 +22,15 @@ public:
 
     [[nodiscard]] std::shared_ptr<cms::Connection> Connection() const { return connection; }
 
-    [[nodiscard]] std::shared_ptr<cms::Session> CreateSession() const {
+    [[nodiscard]] std::shared_ptr<cms::Session> CreateSession() {
+        std::lock_guard<std::mutex> lock(sessionMutex);
         return std::shared_ptr<cms::Session>(connection->createSession(cms::Session::AUTO_ACKNOWLEDGE));
     }
 
 private:
     std::unique_ptr<activemq::core::ActiveMQConnectionFactory> factory;
     std::shared_ptr<cms::Connection> connection;
+    std::mutex sessionMutex;
 };
 
 #endif //SERVICES_CONNECTION_MANAGER_HPP
