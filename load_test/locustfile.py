@@ -62,7 +62,7 @@ class TournamentUser(HttpUser):
                 response.failure(f"falló crear el grupo: {response.status_code}")
                 return None
 
-    def assign_teams_to_group(self, tournament_id: Any, group_id: Any, team_list: list):
+    def assign_teams_to_group(self, tournament_id: Any, group_id: Any, teams_list: list):
         for team in teams_list:
             team_data = {
                 "id": team["id"],

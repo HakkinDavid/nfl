@@ -19,7 +19,7 @@ std::shared_ptr<domain::Tournament> TournamentRepository::ReadById(std::string i
 
 
     pqxx::work tx(*(connection->connection));
-    const pqxx::result result = tx.exec(pqxx::prepped{"select_tournament_by_id"}, id);
+    const pqxx::result result = tx.exec(pqxx::prepped{"select_tournament_by_id"}, pqxx::params{id});
     tx.commit();
 
     if (result.empty()) {
