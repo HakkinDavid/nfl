@@ -20,13 +20,20 @@ public:
 };
 
 inline void TournamentReadyListener::processMessage(const std::string &message) {
-    auto json = nlohmann::json::parse(message);
-    std::string tournamentId = json.at("tournament_id");
+    try {
+        std::println("TournamentReadyListener received message: {}", message);
+        auto json = nlohmann::json::parse(message);
+        std::string tournamentId = json.at("tournament_id");
 
-    auto result = matchDelegate->createFirstRoundMatches(tournamentId);
-    
-    if (!result.has_value()) {
-        std::println("TournamentReadyListener error: {}", result.error());
+        auto result = matchDelegate->createFirstRoundMatches(tournamentId);
+
+        if (!result.has_value()) {
+            std::println("TournamentReadyListener error: {}", result.error());
+        }
+    } catch (const nlohmann::json::exception& e) {
+        std::println("JSON parse error in TournamentReadyListener: {} - Message was: {}", e.what(), message);
+    } catch (const std::exception& e) {
+        std::println("Error in TournamentReadyListener: {} - Message was: {}", e.what(), message);
     }
 }
 
