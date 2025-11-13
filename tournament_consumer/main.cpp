@@ -7,7 +7,10 @@
 #include "configuration/ContainerSetup.hpp"
 
 int main() {
+    std::println("Starting tournament_consumer...");
+    std::println("Initializing ActiveMQ library...");
     activemq::library::ActiveMQCPP::initializeLibrary();
+    std::println("ActiveMQ initialized successfully");
     {
         std::println("before container");
         auto container = config::containerSetup();
