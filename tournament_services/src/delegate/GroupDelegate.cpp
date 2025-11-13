@@ -103,8 +103,18 @@ std::expected<void, std::string> GroupDelegate::AddTeamToGroup(std::string_view 
     }
 
     try {
+        std::cout << "[DEBUG] AddTeamToGroup - BEFORE UpdateGroupAddTeam" << std::endl;
         groupRepository->UpdateGroupAddTeam(groupId, team);
+        std::cout << "[DEBUG] AddTeamToGroup - AFTER UpdateGroupAddTeam, BEFORE checkAndPublish" << std::endl;
+
+        // Read back to verify
+        auto groupAfter = groupRepository->FindByTournamentIdAndGroupId(tournamentId, groupId);
+        if (groupAfter) {
+            std::cout << "[DEBUG] AddTeamToGroup - Group now has " << groupAfter->Teams().size() << " teams after insert" << std::endl;
+        }
+
         checkAndPublishTournamentReadyEvent(tournamentId);
+        std::cout << "[DEBUG] AddTeamToGroup - AFTER checkAndPublish" << std::endl;
         return {};
     } catch (const domain::NotFoundException& e) {
         return std::unexpected(e.what());
