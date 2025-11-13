@@ -17,9 +17,12 @@
 #include "persistence/repository/TeamRepository.hpp"
 #include "persistence/configuration/PostgresConnectionProvider.hpp"
 #include "persistence/repository/TournamentRepository.hpp"
+#include "persistence/repository/GroupRepository.hpp"
+#include "persistence/repository/MatchRepository.hpp"
 #include "../cms/QueueMessageListener.hpp"
 #include "cms/TournamentReadyListener.hpp"
 #include "cms/MatchScoreUpdatedListener.hpp"
+#include "delegate/MatchDelegate.hpp"
 
 namespace config {
     nlohmann::json configuration;
@@ -38,6 +41,10 @@ namespace config {
                 instance->initialize(configuration["activemq"]["broker-url"].get<std::string>());
             })
             .singleInstance();
+
+        builder.registerType<GroupRepository>().as<IGroupRepository>().singleInstance();
+        builder.registerType<MatchRepository>().as<IMatchRepository>().singleInstance();
+        builder.registerType<MatchDelegate>().singleInstance();
 
         builder.registerType<TournamentReadyListener>();
         builder.registerType<MatchScoreUpdatedListener>();

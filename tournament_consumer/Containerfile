@@ -1,0 +1,31 @@
+# tournament_consumer/Containerfile
+
+# Stage 1: Build stage
+FROM fedora:42 AS builder
+
+RUN dnf install -y ninja gcc vim gcc gcc-c++ clang openssh-server lldb clangd libicu python3 pip cmake perl gdb awk npm git bison flex autoconf openssl libtool automake kernel-devel
+RUN  dnf -y update
+RUN git clone --depth 1 https://github.com/microsoft/vcpkg.git /opt/vcpkg/
+RUN chmod 777 -R /opt/vcpkg
+RUN /opt/vcpkg/bootstrap-vcpkg.sh
+RUN export VCPKG_BINARY_SOURCES="clear;files,/opt/vcpkg/binary-cache,readwrite"
+RUN git clone --depth 1 https://github.com/HakkinDavid/nfl.git /root/tournaments
+WORKDIR /root/tournaments
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM=ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake -G Ninja -S /root/tournaments -B /root/tournaments/cmake-build-release
+
+RUN cmake --build /root/tournaments/cmake-build-release --target tournament_consumer
+
+
+# Stage 2: Runtime stage
+FROM fedora-minimal:42
+RUN useradd -m -u 1001 appuser
+WORKDIR /app
+
+COPY --from=builder /root/tournaments/cmake-build-release/tournament_consumer/tournament_consumer /app/
+COPY --from=builder /root/tournaments/cmake-build-release/tournament_consumer/configuration.json /app/
+
+RUN chown -R appuser:appuser /app
+USER appuser
+EXPOSE 8080
+
+CMD ["./tournament_consumer"]
