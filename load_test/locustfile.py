@@ -161,6 +161,8 @@ class TournamentUser(HttpUser):
                 try:
                     matches = response.json()
                     print(f"partidos finales del torneo {tournament_id}: {json.dumps(matches, indent=2)}")
+                    print("sería todo :)")
+                    return
                 except Exception as e:
                     response.failure(f"maurico no pude leer los partidos finales perdon: {str(e)}")
             else:

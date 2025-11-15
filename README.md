@@ -20,6 +20,8 @@ podman run --replace -d --network development --name tournament_services_1 -p 80
 podman run --replace -d --network development --name tournament_services_2 -p 8082:8080 tournament_services
 podman run --replace -d --network development --name tournament_services_3 -p 8083:8080 tournament_services
 
+podman run --replace -d --network development --name tournament_consumer -p 8085:8080 tournament_consumer
+
 podman run -d --replace --name load_balancer --network development -p 8000:8080 -p 8404:8404 -v ./tournament_services/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:Z haproxy
 ```
 
