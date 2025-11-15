@@ -1,9 +1,33 @@
 from typing import Any
 from locust import HttpUser, task
 import json
-import uuid
 import random
 import time
+
+# ando bien nombrado
+NFL_TEAMS = [
+    "buffalo bills", "miami dolphins", "new england patriots", "new york jets",
+    "baltimore ravens", "cincinnati bengals", "cleveland browns", "pittsburgh steelers",
+    "houston texans", "indianapolis colts", "jacksonville jaguars", "tennessee titans",
+    "denver broncos", "kansas city chiefs", "las vegas raiders", "los angeles chargers",
+    "dallas cowboys", "new york giants", "philadelphia eagles", "washington commanders",
+    "chicago bears", "detroit lions", "green bay packers", "minnesota vikings",
+    "atlanta falcons", "carolina panthers", "new orleans saints", "tampa bay buccaneers",
+    "arizona cardinals", "los angeles rams", "san francisco 49ers", "seattle seahawks"
+]
+
+NFL_GROUPS = [
+    "afc este", "afc norte", "afc sur", "afc oeste",
+    "nfc este", "nfc norte", "nfc sur", "nfc oeste"
+]
+
+NFL_TOURNAMENT_NAMES = [
+    "nfl season simulation",
+    "super bowl run",
+    "offseason madness",
+    "preseason chaos",
+    "nfl experimental cup"
+]
 
 class TournamentUser(HttpUser):
 
@@ -11,7 +35,7 @@ class TournamentUser(HttpUser):
         teams_created = list()
         for i in range(32):
             team_data = {
-                "name": f"Team {uuid.uuid4()}"
+                "name": NFL_TEAMS[i]
             }
             with self.client.post(
                     "/teams",
@@ -32,7 +56,7 @@ class TournamentUser(HttpUser):
 
     def create_tournament(self):
         tournament_data = {
-            "name": f"Tournament - {uuid.uuid4()}"
+            "name": random.choice(NFL_TOURNAMENT_NAMES)
         }
         with self.client.post(
                 "/tournaments",
@@ -47,8 +71,11 @@ class TournamentUser(HttpUser):
                 return None
 
     def create_group(self, tournament_id: Any | None):
+        group_ids = getattr(self, "_group_ids_for_group_creation", None)
+        if group_ids is None:
+            group_ids = []
         group_data = {
-            "name": f"Group - {uuid.uuid4()}"
+            "name": NFL_GROUPS[len(group_ids)]
         }
         with self.client.post(
                 f"/tournaments/{tournament_id}/groups",
@@ -71,7 +98,7 @@ class TournamentUser(HttpUser):
 
             with self.client.post(
                     f"/tournaments/{tournament_id}/groups/{group_id}/teams",
-                    json=team_data, # Ahora el JSON es {"id": "...", "name": "..."}
+                    json=team_data, # NO ME DEJA ENTRAR AL melvincasa JSON
                     catch_response=True,
                     name=f"POST /tournaments/{tournament_id}/groups/{group_id}/teams"
             ) as response:
@@ -107,7 +134,7 @@ class TournamentUser(HttpUser):
 
     def simulate_round(self, tournament_id: Any, round_name: str, expected_matches: int, no_ties=False):
         matches = []
-        # espera hasta que haya el número esperado de partidos pendientes
+        # ps a ver si la api ya se digna a soltar los mugres partidos
         while True:
             matches = self.fetch_pending_matches(tournament_id)
             if len(matches) == expected_matches:
@@ -131,17 +158,18 @@ class TournamentUser(HttpUser):
         if len(created_teams) < 32:
             return
         group_ids = []
+        self._group_ids_for_group_creation = group_ids
         for _ in range(8):
             group_id = self.create_group(tournament_id)
             if group_id:
                 group_ids.append(group_id)
+        del self._group_ids_for_group_creation
         if len(group_ids) < 8:
             return
-        # asigna 4 equipos a cada grupo
+        # reparto 4 equipos por piocha
         for i, group_id in enumerate(group_ids):
             teams_for_group = created_teams[i*4:(i+1)*4]
             self.assign_teams_to_group(tournament_id, group_id, teams_for_group)
-        # simula las rondas
         rounds = [
             ("primera ronda", 160, False),
             ("tarjeta salvaje", 6, True), # yo cuando me salvajeo
@@ -151,7 +179,6 @@ class TournamentUser(HttpUser):
         ]
         for round_name, expected_matches, no_ties in rounds:
             self.simulate_round(tournament_id, round_name, expected_matches, no_ties)
-        # al final trae todos los partidos y muestra los resultados
         with self.client.get(
                 f"/tournaments/{tournament_id}/matches",
                 catch_response=True,
