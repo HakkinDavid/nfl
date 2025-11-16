@@ -211,10 +211,11 @@ TEST_F(MatchDelegateTest, CreateFirstRoundMatches_Success) {
 
     ASSERT_TRUE(result.has_value());
 
-    //for (int i=0; i < 160; ++i) {
-    //    ASSERT_EQ(capturedMatches[i].Home(), firstRoundMatches[i].Home());
-    //    ASSERT_EQ(capturedMatches[i].Visitor(), firstRoundMatches[i].Visitor());
-    //}
+    // Revisar que las matches sean iguales a las de firstRoundMatches
+    for (int i=0; i < 160; ++i) {
+        ASSERT_EQ(capturedMatches[i].Home().Id, firstRoundMatches[i]->Home().Id);
+        ASSERT_EQ(capturedMatches[i].Visitor().Id, firstRoundMatches[i]->Visitor().Id);
+    }
 }
 
 TEST_F(MatchDelegateTest, CreateFirstRoundMatches_FailsWhenRepositoryThrows) {
@@ -237,13 +238,6 @@ TEST_F(MatchDelegateTest, GenerateNextRound_Success_FirstRoundToWildCard) {
     auto mockMatch = std::make_shared<domain::Match>();
     mockMatch->Round() = "First Round";
 
-    // Mock 160 matches de First Round completadas
-    std::vector<std::shared_ptr<domain::Match>> firstRoundMatches(160);
-    for (auto& match : firstRoundMatches) {
-        match = std::make_shared<domain::Match>();
-        match->Score() = domain::Score{1, 0}; // Todas tienen score
-    }
-
     EXPECT_CALL(*matchRepoMock, FindByIdAndTournamentId(MATCH_ID, TOURNAMENT_ID))
         .WillOnce(testing::Return(mockMatch));
 
@@ -254,12 +248,24 @@ TEST_F(MatchDelegateTest, GenerateNextRound_Success_FirstRoundToWildCard) {
     EXPECT_CALL(*groupRepoMock, FindByTournamentId(TOURNAMENT_ID))
         .WillOnce(testing::Return(createMockGroups(8)));
 
-    // Mock team matches para calculo de playoff
-    
-    // for (i < 32)
-    // vector<ptr match> swews {matches[indexes[10*i + 0]], matches[indexes[10*i + 1]], ...}
-    EXPECT_CALL(*matchRepoMock, GetMatchesByTeamId(::testing::_, ::testing::_)) // team-name
-        .WillRepeatedly(testing::Return(std::vector<std::shared_ptr<domain::Match>>{})); //swews
+    {
+        testing::InSequence seq;
+
+        for (int i=0; i < 32; ++i) {
+
+            std::vector<std::shared_ptr<domain::Match>> matches;
+
+            for (int j=0; j<10; ++j) {
+                matches.push_back(firstRoundMatches[teamIndexes[i*10+j]]);
+            }
+
+            EXPECT_CALL(*matchRepoMock, GetMatchesByTeamId(TOURNAMENT_ID, "team-" + std::to_string(i)))
+                .WillOnce(testing::Return(matches))
+                .RetiresOnSaturation();
+
+        }
+    }
+
 
     EXPECT_CALL(*matchRepoMock, Create(::testing::_))
         .Times(6) // 6 Wild Card matches
