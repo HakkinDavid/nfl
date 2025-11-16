@@ -263,7 +263,7 @@ TEST_F(MatchDelegateTest, GenerateNextRound_FirstRoundToWildCard_CreatesCorrectM
 
         for (int i=0; i < 32; ++i) {
             std::vector<std::shared_ptr<domain::Match>> matches;
-            for (int j=0; j<10; ++j) {
+            for (int j=0; j < 10; ++j) {
                 matches.push_back(firstRoundMatches[teamIndexes[i*10+j]]);
             }
 
@@ -392,6 +392,17 @@ TEST_F(MatchDelegateTest, GenerateNextRound_WildCardToGroup_CreatesCorrectMatche
     std::array<domain::Match, 4> capturedMatches;
     {
         testing::InSequence seq;
+
+        for (int i=0; i < 32; ++i) {
+            std::vector<std::shared_ptr<domain::Match>> matches;
+            for (int j=0; j < 10; ++j) {
+                matches.push_back(firstRoundMatches[teamIndexes[i*10+j]]);
+            }
+
+            EXPECT_CALL(*matchRepoMock, GetMatchesByTeamId(TOURNAMENT_ID, "team-" + std::to_string(i)))
+                .WillOnce(testing::Return(matches))
+                .RetiresOnSaturation();
+        }
 
         for (int i=0; i < 4; ++i) {
             EXPECT_CALL(*matchRepoMock, Create(::testing::_))
