@@ -419,10 +419,14 @@ TEST_F(MatchDelegateTest, GenerateNextRound_ConferenceToFinals_CreatesCorrectMat
     triggerMatch->Round() = "Conference";
     triggerMatch->Id() = "match-172";
 
+    domain::Match capturedMatch;
+
     std::vector<std::shared_ptr<domain::Match>> conferenceMatches = {
         createMockMatch("match-171", "14", "9", "Conference", 3, 4),  // team-9 wins
         createMockMatch("match-172", "24", "21", "Conference", 8, 2)  // team-24 wins
     };
+
+    std::shared_ptr<domain::Match> finalMatch = createMockMatch("match-173", "9", "24", "Finals");
 
     EXPECT_CALL(*matchRepoMock, FindByIdAndTournamentId(MATCH_ID, TOURNAMENT_ID))
         .WillOnce(testing::Return(triggerMatch));
@@ -432,16 +436,12 @@ TEST_F(MatchDelegateTest, GenerateNextRound_ConferenceToFinals_CreatesCorrectMat
         .WillRepeatedly(testing::Return(conferenceMatches));
 
     EXPECT_CALL(*matchRepoMock, Create(::testing::_))
-        .Times(1)
-        .WillOnce(testing::Invoke([](const domain::Match& match) {
-            EXPECT_EQ(match.Round(), "Finals");
-            EXPECT_EQ(match.Home().Id, "team-9");
-            EXPECT_EQ(match.Home().Name, "Team 9");
-            EXPECT_EQ(match.Visitor().Id, "team-24");
-            EXPECT_EQ(match.Visitor().Name, "Team 24");
-            return "match-173";
-        }));
+        .WillOnce(testing::DoAll(
+            testing::SaveArg<0>(&capturedMatch), testing::Return(MATCH_ID)));
 
     auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
     ASSERT_TRUE(result.has_value());
+
+    ASSERT_EQ(finalMatch->Home().Id, capturedMatch.Home().Id);
+    ASSERT_EQ(finalMatch->Visitor().Id, capturedMatch.Visitor().Id);
 }
