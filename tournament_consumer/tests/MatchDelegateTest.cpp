@@ -102,14 +102,26 @@ TEST_F(MatchDelegateTest, CreateFirstRoundMatches_Success) {
     EXPECT_CALL(*groupRepoMock, FindByTournamentId(TOURNAMENT_ID))
         .WillOnce(testing::Return(mockGroups));
 
-    // 160 matches (96 intergroup + 64 intra-group)
-    EXPECT_CALL(*matchRepoMock, Create(::testing::_))
-        .Times(160)
-        .WillRepeatedly(testing::Return("match-id"));
+    
+    std::array<domain::Match, 160> capturedMatches;
+    {
+        testing::InSequence seq;
+
+        // 160 matches (96 intergroup + 64 intra-group)
+        for (int i=0; i < 160; ++i) {
+            EXPECT_CALL(*matchRepoMock, Create(::testing::_))
+                .WillOnce(testing::DoAll(
+                    testing::SaveArg<0>(&capturedMatches[i]),
+                    testing::Return("match-" + std::to_string(i))
+                ))
+                .RetiresOnSaturation();
+        }
+    }
 
     auto result = matchDelegate->createFirstRoundMatches(TOURNAMENT_ID);
 
     ASSERT_TRUE(result.has_value());
+    // for i < 160 capturedMatches[i] == firstRoundMatches[i]
 }
 
 TEST_F(MatchDelegateTest, CreateFirstRoundMatches_FailsWhenRepositoryThrows) {
@@ -145,17 +157,20 @@ TEST_F(MatchDelegateTest, GenerateNextRound_Success_FirstRoundToWildCard) {
     EXPECT_CALL(*matchRepoMock, FindMatchesByTournamentAndRound(TOURNAMENT_ID, "First Round"))
         .WillOnce(testing::Return(firstRoundMatches));
 
-    EXPECT_CALL(*matchRepoMock, Create(::testing::_))
-        .Times(6) // 6 Wild Card matches
-        .WillRepeatedly(testing::Return("wildcard-match-id"));
-
     // Mock playoff teams
     EXPECT_CALL(*groupRepoMock, FindByTournamentId(TOURNAMENT_ID))
         .WillOnce(testing::Return(createMockGroups(8)));
 
     // Mock team matches para calculo de playoff
-    EXPECT_CALL(*matchRepoMock, GetMatchesByTeamId(::testing::_, ::testing::_))
-        .WillRepeatedly(testing::Return(std::vector<std::shared_ptr<domain::Match>>{}));
+    
+    // for (i < 32)
+    // vector<ptr match> swews {matches[indexes[10*i + 0]], matches[indexes[10*i + 1]], ...}
+    EXPECT_CALL(*matchRepoMock, GetMatchesByTeamId(::testing::_, ::testing::_)) // team-name
+        .WillRepeatedly(testing::Return(std::vector<std::shared_ptr<domain::Match>>{})); //swews
+
+    EXPECT_CALL(*matchRepoMock, Create(::testing::_))
+        .Times(6) // 6 Wild Card matches
+        .WillRepeatedly(testing::Return("wildcard-match-id"));
 
     auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
 
