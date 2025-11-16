@@ -196,7 +196,7 @@ TEST_F(MatchDelegateTest, CreateFirstRoundMatches_Success) {
     {
         testing::InSequence seq;
 
-        // 160 matches (96 intergroup + 64 intra-group)
+        // 160 matches (112 intergroup + 48 intra-group)
         for (int i=0; i < 160; ++i) {
             EXPECT_CALL(*matchRepoMock, Create(::testing::_))
                 .WillOnce(testing::DoAll(
@@ -234,7 +234,7 @@ TEST_F(MatchDelegateTest, CreateFirstRoundMatches_FailsWhenRepositoryThrows) {
 }
 
 
-TEST_F(MatchDelegateTest, GenerateNextRound_Success_FirstRoundToWildCard) {
+TEST_F(MatchDelegateTest, GenerateNextRound_FirstRoundToWildCard_CreatesCorrectMatches) {
     auto mockMatch = std::make_shared<domain::Match>();
     mockMatch->Round() = "First Round";
 
@@ -258,14 +258,11 @@ TEST_F(MatchDelegateTest, GenerateNextRound_Success_FirstRoundToWildCard) {
         .WillOnce(testing::Return(createMockGroups(8)));
 
     std::array<domain::Match, 6> capturedMatches;
-
     {
         testing::InSequence seq;
 
         for (int i=0; i < 32; ++i) {
-
             std::vector<std::shared_ptr<domain::Match>> matches;
-
             for (int j=0; j<10; ++j) {
                 matches.push_back(firstRoundMatches[teamIndexes[i*10+j]]);
             }
@@ -273,21 +270,19 @@ TEST_F(MatchDelegateTest, GenerateNextRound_Success_FirstRoundToWildCard) {
             EXPECT_CALL(*matchRepoMock, GetMatchesByTeamId(TOURNAMENT_ID, "team-" + std::to_string(i)))
                 .WillOnce(testing::Return(matches))
                 .RetiresOnSaturation();
-
         }
 
-            for (int i=0; i < 6; ++i) {
-                EXPECT_CALL(*matchRepoMock, Create(::testing::_))
-                    .WillOnce(testing::DoAll(
-                        testing::SaveArg<0>(&capturedMatches[i]),
-                        testing::Return(MATCH_ID)
-                    ))
-                    .RetiresOnSaturation();
-            }
+        for (int i=0; i < 6; ++i) {
+            EXPECT_CALL(*matchRepoMock, Create(::testing::_))
+                .WillOnce(testing::DoAll(
+                    testing::SaveArg<0>(&capturedMatches[i]),
+                    testing::Return(MATCH_ID)
+                ))
+                .RetiresOnSaturation();
+        }
     }
 
     auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
-
     ASSERT_TRUE(result.has_value());
 
     // Checando que los matches creados con los que ya estan estipulados
@@ -361,6 +356,63 @@ TEST_F(MatchDelegateTest, GenerateNextRound_RepositoryThrows_ReturnsError) {
     EXPECT_EQ(result.error(), "Database connection failed");
 }
 
+TEST_F(MatchDelegateTest, GenerateNextRound_WildCardToGroup_CreatesCorrectMatches) {
+    auto triggerMatch = std::make_shared<domain::Match>();
+    triggerMatch->Round() = "Wild Card";
+    triggerMatch->Id() = "match-166";
+
+    std::vector<std::shared_ptr<domain::Match>> wildCardMatches = {
+        createMockMatch("match-161", "1", "2", "Wild Card", 4, 7),
+        createMockMatch("match-162", "9", "12", "Wild Card", 5, 3),
+        createMockMatch("match-163", "4", "15", "Wild Card", 8, 3),
+        createMockMatch("match-164", "22", "19", "Wild Card", 6, 10),
+        createMockMatch("match-165", "17", "29", "Wild Card", 2, 1),
+        createMockMatch("match-166", "28", "21", "Wild Card", 2, 9)
+    };
+
+    std::vector<std::shared_ptr<domain::Match>> groupMatches = {
+        createMockMatch("match-167", "14", "2", "Group"),
+        createMockMatch("match-168", "9", "4", "Group"),
+        createMockMatch("match-169", "24", "19", "Group"),
+        createMockMatch("match-170", "17", "21", "Group")
+    };
+
+    auto mockGroups = createMockGroups(8);
+
+    EXPECT_CALL(*matchRepoMock, FindByIdAndTournamentId(MATCH_ID, TOURNAMENT_ID))
+        .WillOnce(testing::Return(triggerMatch));
+
+    EXPECT_CALL(*matchRepoMock, FindMatchesByTournamentAndRound(TOURNAMENT_ID, "Group"))
+        .Times(2)
+        .WillRepeatedly(testing::Return(wildCardMatches));
+
+    EXPECT_CALL(*groupRepoMock, FindByTournamentId(TOURNAMENT_ID))
+        .WillOnce(testing::Return(mockGroups));
+
+    std::array<domain::Match, 4> capturedMatches;
+    {
+        testing::InSequence seq;
+
+        for (int i=0; i < 4; ++i) {
+            EXPECT_CALL(*matchRepoMock, Create(::testing::_))
+                .WillOnce(testing::DoAll(
+                    testing::SaveArg<0>(&capturedMatches[i]),
+                    testing::Return(MATCH_ID)
+                ))
+                .RetiresOnSaturation();
+        }
+    }
+
+    auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
+    ASSERT_TRUE(result.has_value());
+
+    // Checando que los matches creados con los que ya estan estipulados
+    for (int i=0; i < 4; ++i) {
+        ASSERT_EQ(capturedMatches[i].Home().Id, groupMatches[i]->Home().Id);
+        ASSERT_EQ(capturedMatches[i].Visitor().Id, groupMatches[i]->Visitor().Id);
+    }
+}
+
 TEST_F(MatchDelegateTest, GenerateNextRound_GroupToConference_CreatesCorrectMatches) {
     auto triggerMatch = std::make_shared<domain::Match>();
     triggerMatch->Round() = "Group";
@@ -419,8 +471,6 @@ TEST_F(MatchDelegateTest, GenerateNextRound_ConferenceToFinals_CreatesCorrectMat
     triggerMatch->Round() = "Conference";
     triggerMatch->Id() = "match-172";
 
-    domain::Match capturedMatch;
-
     std::vector<std::shared_ptr<domain::Match>> conferenceMatches = {
         createMockMatch("match-171", "14", "9", "Conference", 3, 4),  // team-9 wins
         createMockMatch("match-172", "24", "21", "Conference", 8, 2)  // team-24 wins
@@ -435,13 +485,16 @@ TEST_F(MatchDelegateTest, GenerateNextRound_ConferenceToFinals_CreatesCorrectMat
         .Times(2)
         .WillRepeatedly(testing::Return(conferenceMatches));
 
+    domain::Match capturedMatch;
     EXPECT_CALL(*matchRepoMock, Create(::testing::_))
         .WillOnce(testing::DoAll(
-            testing::SaveArg<0>(&capturedMatch), testing::Return(MATCH_ID)));
+            testing::SaveArg<0>(&capturedMatch), 
+            testing::Return(MATCH_ID)
+        ));
 
     auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
     ASSERT_TRUE(result.has_value());
 
-    ASSERT_EQ(finalMatch->Home().Id, capturedMatch.Home().Id);
-    ASSERT_EQ(finalMatch->Visitor().Id, capturedMatch.Visitor().Id);
+    ASSERT_EQ(capturedMatch.Home().Id, finalMatch->Home().Id);
+    ASSERT_EQ(capturedMatch.Visitor().Id, finalMatch->Visitor().Id);
 }
