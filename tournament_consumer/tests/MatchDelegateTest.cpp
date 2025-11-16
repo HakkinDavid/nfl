@@ -382,7 +382,7 @@ TEST_F(MatchDelegateTest, GenerateNextRound_WildCardToGroup_CreatesCorrectMatche
     EXPECT_CALL(*matchRepoMock, FindByIdAndTournamentId(MATCH_ID, TOURNAMENT_ID))
         .WillOnce(testing::Return(triggerMatch));
 
-    EXPECT_CALL(*matchRepoMock, FindMatchesByTournamentAndRound(TOURNAMENT_ID, "Group"))
+    EXPECT_CALL(*matchRepoMock, FindMatchesByTournamentAndRound(TOURNAMENT_ID, "Wild Card"))
         .Times(2)
         .WillRepeatedly(testing::Return(wildCardMatches));
 
