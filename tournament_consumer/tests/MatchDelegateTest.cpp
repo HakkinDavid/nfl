@@ -121,7 +121,11 @@ TEST_F(MatchDelegateTest, CreateFirstRoundMatches_Success) {
     auto result = matchDelegate->createFirstRoundMatches(TOURNAMENT_ID);
 
     ASSERT_TRUE(result.has_value());
-    // for i < 160 capturedMatches[i] == firstRoundMatches[i]
+
+    //for (int i=0; i < 160; ++i) {
+    //    ASSERT_EQ(capturedMatches[i].Home(), firstRoundMatches[i].Home());
+    //    ASSERT_EQ(capturedMatches[i].Visitor(), firstRoundMatches[i].Visitor());
+    //}
 }
 
 TEST_F(MatchDelegateTest, CreateFirstRoundMatches_FailsWhenRepositoryThrows) {
