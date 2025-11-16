@@ -238,6 +238,15 @@ TEST_F(MatchDelegateTest, GenerateNextRound_Success_FirstRoundToWildCard) {
     auto mockMatch = std::make_shared<domain::Match>();
     mockMatch->Round() = "First Round";
 
+    std::vector<std::shared_ptr<domain::Match>> wildCardMatches = {
+        createMockMatch("match-161", "1", "2", "Wild Card"),
+        createMockMatch("match-162", "9", "12", "Wild Card"),
+        createMockMatch("match-163", "4", "15", "Wild Card"),
+        createMockMatch("match-164", "22", "19", "Wild Card"),
+        createMockMatch("match-165", "17", "29", "Wild Card"),
+        createMockMatch("match-166", "28", "21", "Wild Card")
+    };
+
     EXPECT_CALL(*matchRepoMock, FindByIdAndTournamentId(MATCH_ID, TOURNAMENT_ID))
         .WillOnce(testing::Return(mockMatch));
 
@@ -247,6 +256,8 @@ TEST_F(MatchDelegateTest, GenerateNextRound_Success_FirstRoundToWildCard) {
     // Mock playoff teams
     EXPECT_CALL(*groupRepoMock, FindByTournamentId(TOURNAMENT_ID))
         .WillOnce(testing::Return(createMockGroups(8)));
+
+    std::array<domain::Match, 6> capturedMatches;
 
     {
         testing::InSequence seq;
@@ -264,16 +275,26 @@ TEST_F(MatchDelegateTest, GenerateNextRound_Success_FirstRoundToWildCard) {
                 .RetiresOnSaturation();
 
         }
+
+            for (int i=0; i < 6; ++i) {
+                EXPECT_CALL(*matchRepoMock, Create(::testing::_))
+                    .WillOnce(testing::DoAll(
+                        testing::SaveArg<0>(&capturedMatches[i]),
+                        testing::Return(MATCH_ID)
+                    ))
+                    .RetiresOnSaturation();
+            }
     }
-
-
-    EXPECT_CALL(*matchRepoMock, Create(::testing::_))
-        .Times(6) // 6 Wild Card matches
-        .WillRepeatedly(testing::Return("wildcard-match-id"));
 
     auto result = matchDelegate->generateNextRound(MATCH_ID, TOURNAMENT_ID);
 
     ASSERT_TRUE(result.has_value());
+
+    // Checando que los matches creados con los que ya estan estipulados
+    for (int i=0; i < 6; ++i) {
+        ASSERT_EQ(capturedMatches[i].Home().Id, wildCardMatches[i]->Home().Id);
+        ASSERT_EQ(capturedMatches[i].Visitor().Id, wildCardMatches[i]->Visitor().Id);
+    }
 }
 
 TEST_F(MatchDelegateTest, GenerateNextRound_RoundNotComplete_NoAction) {
