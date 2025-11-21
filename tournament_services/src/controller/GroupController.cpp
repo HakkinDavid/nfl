@@ -85,7 +85,7 @@ crow::response GroupController::AddTeamToGroup(const crow::request& req, const s
         return crow::response(crow::NO_CONTENT);
     }
 
-    return crow::response(crow::BAD_REQUEST, result.error());
+    return crow::response(422, result.error());
 }
 
 crow::response GroupController::UpdateGroupName(const crow::request& req, const std::string& tournamentId, const std::string& groupId) const {
