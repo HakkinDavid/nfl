@@ -18,7 +18,7 @@ std::expected<std::string, std::string> TournamentDelegate::CreateTournament(std
     try {
         std::shared_ptr<domain::Tournament> tp = std::move(tournament);
         std::string id = tournamentRepository->Create(*tp);
-        producer->SendMessage(id, "tournament.created");
+        //producer->SendMessage(id, "tournament.created");
         return id;
     } catch (const domain::DuplicateEntryException& e) {
         return std::unexpected(e.what());

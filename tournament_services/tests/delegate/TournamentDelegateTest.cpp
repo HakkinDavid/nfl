@@ -67,8 +67,8 @@ TEST_F(TournamentDelegateTest, CreateTournament_Success) {
             testing::Return(generatedId)
         ));
 
-    EXPECT_CALL(*queueProducerMockConcrete, SendMessage(generatedId, "tournament.created"))
-        .Times(1);
+    // EXPECT_CALL(*queueProducerMockConcrete, SendMessage(generatedId, "tournament.created"))
+    //     .Times(1);
 
     auto result = tournamentDelegate->CreateTournament(tournamentToCreate);
 
